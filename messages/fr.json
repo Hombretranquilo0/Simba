@@ -1,0 +1,59 @@
+{
+  "common": {
+    "addToCart": "Ajouter au panier",
+    "cart": "Panier",
+    "search": "Rechercher des produits...",
+    "checkout": "Passer à la caisse",
+    "price": "Prix",
+    "quantity": "Quantité",
+    "remove": "Supprimer",
+    "emptyCart": "Votre panier est vide",
+    "items": "articles",
+    "viewDetails": "Voir les détails",
+    "backToShop": "Retour à la boutique",
+    "inStock": "En stock et prêt à être expédié",
+    "outOfStock": "Rupture de stock",
+    "per": "par",
+    "freshness": "La fraîcheur livrée à votre porte.",
+    "shopTagline": "Achetez parmi la plus large gamme de produits d'épicerie, d'articles ménagers essentiels et plus encore de Simba Rwanda.",
+    "shopNow": "Acheter maintenant",
+    "noProducts": "Aucun produit trouvé",
+    "noProductsDesc": "Nous n'avons trouvé aucun produit correspondant à \"{searchTerm}\". Essayez de vérifier les fautes de frappe ou d'utiliser des termes plus larges.",
+    "quality": "Qualité",
+    "genuine": "100% Authentique",
+    "delivery": "Livraison",
+    "fastSecure": "Rapide & Sécurisé",
+    "returns": "Retours",
+    "easyReturns": "Retours faciles",
+    "description": "Description",
+    "subtotal": "Sous-total",
+    "total": "Montant total",
+    "deliveryFee": "Frais de livraison",
+    "free": "Gratuit",
+    "continueShopping": "Continuer les achats",
+    "clearCart": "Vider le panier",
+    "orderSummary": "Résumé de la commande",
+    "taxesNotice": "Taxes calculées lors de la commande. Livraison gratuite sur toutes les commandes pour une durée limitée.",
+    "startShopping": "Commencer les achats",
+    "emptyCartDesc": "Il semble que vous n'ayez encore rien ajouté à votre panier. Parcourez nos produits et trouvez ce qui vous plaît !"
+  },
+  "navbar": {
+    "home": "Accueil",
+    "categories": "Catégories"
+  },
+  "products": {
+    "descriptionFallback": "{name} fait partie de la selection {category} de Simba Supermarket, preparee pour des achats quotidiens fiables avec la qualite et la fraicheur que vous attendez.",
+    "categories": {
+      "Cosmetics & Personal Care": "Cosmétiques et Soins Personnels",
+      "Sports & Wellness": "Sports et Bien-être",
+      "Baby Products": "Produits pour Bébé",
+      "Electronics & Appliances": "Électronique et Appareils",
+      "Household Essentials": "Essentiels Ménagers",
+      "Food & Beverages": "Alimentation et Boissons",
+      "Office & School Supplies": "Fournitures de Bureau et École",
+      "Pet Supplies": "Articles pour Animaux",
+      "Health & Beauty": "Santé et Beauté",
+      "Toys & Games": "Jouets et Jeux"
+    }
+  }
+}

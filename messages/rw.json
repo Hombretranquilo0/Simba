@@ -1,0 +1,59 @@
+{
+  "common": {
+    "addToCart": "Shira mu gitebo",
+    "cart": "Igitebo",
+    "search": "Shaka ibicuruzwa...",
+    "checkout": "Ishyura",
+    "price": "Igiciro",
+    "quantity": "Ingano",
+    "remove": "Kuramo",
+    "emptyCart": "Igitebo cyawe kirimo ubusa",
+    "items": "ibintu",
+    "viewDetails": "Reba birambuye",
+    "backToShop": "Subira guhahira",
+    "inStock": "Biri mu kigega",
+    "outOfStock": "Byashize mu kigega",
+    "per": "kuri",
+    "freshness": "Ibicuruzwa bishya kugeza ku muryango wawe.",
+    "shopTagline": "Haha mu nzego zitandukanye z'ibiribwa n'ibikoresho byo mu rugo kuri Simba Rwanda.",
+    "shopNow": "Haha ubu",
+    "noProducts": "Nta gicuruzwa namba kibonetse",
+    "noProductsDesc": "Ntabwo dushoboye kubona igicuruzwa bijyanye na \"{searchTerm}\". Ongera ugerageze.",
+    "quality": "Ubwiza",
+    "genuine": "100% By'umwimerere",
+    "delivery": "Kugeza",
+    "fastSecure": "Byihuse & Bifite umutekano",
+    "returns": "Kugarura",
+    "easyReturns": "Kugarura byoroshye",
+    "description": "Ibisobanuro",
+    "subtotal": "Igiteranyo gito",
+    "total": "Igiteranyo cyose",
+    "deliveryFee": "Amafaranga yo kugeza",
+    "free": "Ubuntu",
+    "continueShopping": "Komeza guhaha",
+    "clearCart": "Vana byose mu gitebo",
+    "orderSummary": "Incamake y'ibyo ughuze",
+    "taxesNotice": "Imisoro ibarwa umaze kwishyura. Kugeza ni ubuntu ku bicuruzwa byose mu gihe gito.",
+    "startShopping": "Tangira guhaha",
+    "emptyCartDesc": "Biboneka ko nta kintu na kimwe urashira mu gitebo cyawe. Reba ibicuruzwa byacu uhitemo ibyo ukunda!"
+  },
+  "navbar": {
+    "home": "Ahabanza",
+    "categories": "Ibyiciro"
+  },
+  "products": {
+    "descriptionFallback": "{name} ni kimwe mu bicuruzwa bya Simba Supermarket byo mu cyiciro cya {category}, byateguwe kugira ngo ugure buri munsi wizeye ubuziranenge n'ubushya utegereje.",
+    "categories": {
+      "Cosmetics & Personal Care": "Cosmetics n'Ubuntu bwifunze",
+      "Sports & Wellness": "Imikino n'Ubushingire",
+      "Baby Products": "Ibicuruzwa by'Abana",
+      "Electronics & Appliances": "Electronics n'Ibisakure",
+      "Household Essentials": "Ibyakoreshwa mu Rugo",
+      "Food & Beverages": "Ibiribwa n'Ibyoherezwa",
+      "Office & School Supplies": "Ibyakoreshwa mu Biro n'mashuli",
+      "Pet Supplies": "Ibicuruzwa by'Imbaraga",
+      "Health & Beauty": "Ubuzima n'Ubbeauty",
+      "Toys & Games": "Ibyo Kwifuneza"
+    }
+  }
+}

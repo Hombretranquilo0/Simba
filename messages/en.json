@@ -1,0 +1,59 @@
+{
+  "common": {
+    "addToCart": "Add to Cart",
+    "cart": "Cart",
+    "search": "Search products...",
+    "checkout": "Proceed to Checkout",
+    "price": "Price",
+    "quantity": "Quantity",
+    "remove": "Remove",
+    "emptyCart": "Your cart is empty",
+    "items": "items",
+    "viewDetails": "View Details",
+    "backToShop": "Back to Shop",
+    "inStock": "In Stock & Ready to Ship",
+    "outOfStock": "Out of Stock",
+    "per": "per",
+    "freshness": "Freshness delivered to your doorstep.",
+    "shopTagline": "Shop from Simba Rwanda's widest range of groceries, household essentials, and more.",
+    "shopNow": "Shop Now",
+    "noProducts": "No products found",
+    "noProductsDesc": "We couldn't find any products matching \"{searchTerm}\". Try checking for typos or using broader terms.",
+    "quality": "Quality",
+    "genuine": "100% Genuine",
+    "delivery": "Delivery",
+    "fastSecure": "Fast & Secure",
+    "returns": "Returns",
+    "easyReturns": "Easy Returns",
+    "description": "Description",
+    "subtotal": "Subtotal",
+    "total": "Total Amount",
+    "deliveryFee": "Delivery Fee",
+    "free": "Free",
+    "continueShopping": "Continue Shopping",
+    "clearCart": "Clear Cart",
+    "orderSummary": "Order Summary",
+    "taxesNotice": "Taxes calculated at checkout. Free delivery on all orders for a limited time.",
+    "startShopping": "Start Shopping",
+    "emptyCartDesc": "Looks like you haven't added anything to your cart yet. Browse our products and find something you like!"
+  },
+  "navbar": {
+    "home": "Home",
+    "categories": "Categories"
+  },
+  "products": {
+    "descriptionFallback": "{name} is part of Simba Supermarket's {category} selection, prepared for dependable everyday shopping with the quality and freshness you expect.",
+    "categories": {
+      "Cosmetics & Personal Care": "Cosmetics & Personal Care",
+      "Sports & Wellness": "Sports & Wellness",
+      "Baby Products": "Baby Products",
+      "Electronics & Appliances": "Electronics & Appliances",
+      "Household Essentials": "Household Essentials",
+      "Food & Beverages": "Food & Beverages",
+      "Office & School Supplies": "Office & School Supplies",
+      "Pet Supplies": "Pet Supplies",
+      "Health & Beauty": "Health & Beauty",
+      "Toys & Games": "Toys & Games"
+    }
+  }
+}
