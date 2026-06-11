@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCart, Search, Menu, X } from 'lucide-react';
+import { ShoppingCart, Search, Menu, X, User as UserIcon, LogOut, LayoutDashboard } from 'lucide-react';
 import { useSearch } from '@/context/SearchContext';
 import { useCart } from '@/context/CartContext';
 import { useTranslation } from '@/context/TranslationContext';
+import { useAuth } from '@/context/AuthContext';
 import LanguageSwitcher from './LanguageSwitcher';
 import ThemeToggle from './ThemeToggle';
 import { Locale } from '@/utils/i18n';
@@ -15,7 +16,9 @@ const Navbar = ({ locale }: { locale: Locale }) => {
   const { searchTerm, setSearchTerm } = useSearch();
   const { totalItems } = useCart();
   const { t } = useTranslation();
+  const { user, logout, isAuthenticated } = useAuth();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   return (
     <nav className="sticky top-0 z-50 glass dark:bg-gray-950/80 border-b border-gray-200 dark:border-gray-800 px-4 py-3 shadow-sm transition-all duration-300">
@@ -83,6 +86,73 @@ const Navbar = ({ locale }: { locale: Locale }) => {
               )}
             </AnimatePresence>
           </Link>
+
+          {/* User Auth Section */}
+          <div className="relative">
+            {isAuthenticated ? (
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  className="flex items-center gap-2 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 transition-colors"
+                >
+                  <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center text-green-700 dark:text-green-300 font-bold">
+                    {user?.name?.[0]?.toUpperCase() || 'U'}
+                  </div>
+                  <span className="hidden lg:block text-sm font-medium">{user?.name}</span>
+                </button>
+                
+                <AnimatePresence>
+                  {isUserMenuOpen && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 py-2 z-50"
+                    >
+                      <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-800">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Signed in as</p>
+                        <p className="text-sm font-bold truncate">{user?.email}</p>
+                      </div>
+                      
+                      {user?.role === 'manager' && (
+                        <Link 
+                          href={`/${locale}/manager`}
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="w-full text-left px-4 py-2 text-sm text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 flex items-center gap-2 transition-colors border-b border-gray-50 dark:border-gray-800"
+                        >
+                          <LayoutDashboard size={16} />
+                          Manager Dashboard
+                        </Link>
+                      )}
+
+                      <button 
+                        onClick={() => { logout(); setIsUserMenuOpen(false); }}
+                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 transition-colors"
+                      >
+                        <LogOut size={16} />
+                        Logout
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ) : (
+              <div className="hidden md:flex items-center gap-2">
+                <Link 
+                  href={`/${locale}/login`}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-green-600 transition-colors"
+                >
+                  Login
+                </Link>
+                <Link 
+                  href={`/${locale}/signup`}
+                  className="px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-xl transition-all shadow-md shadow-green-600/20"
+                >
+                  Sign Up
+                </Link>
+              </div>
+            )}
+          </div>
 
           <button className="md:hidden p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 transition-colors">
             <Menu size={24} />

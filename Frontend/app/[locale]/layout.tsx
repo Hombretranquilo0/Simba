@@ -55,6 +55,8 @@ export async function generateStaticParams() {
   return locales.map((locale: string) => ({ locale }));
 }
 
+import { AuthProvider } from "@/context/AuthContext";
+
 export default async function RootLayout({
   children,
   params,
@@ -93,18 +95,20 @@ export default async function RootLayout({
         />
       </head>
       <body className={`${inter.className} bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen transition-colors duration-300`}>
-        <ThemeProvider>
-          <TranslationProvider dictionary={dictionary}>
-            <CartProvider>
-              <SearchProvider>
-                <Navbar locale={locale as Locale} />
-                <main>
-                  {children}
-                </main>
-              </SearchProvider>
-            </CartProvider>
-          </TranslationProvider>
-        </ThemeProvider>
+        <AuthProvider>
+          <ThemeProvider>
+            <TranslationProvider dictionary={dictionary}>
+              <CartProvider>
+                <SearchProvider>
+                  <Navbar locale={locale as Locale} />
+                  <main>
+                    {children}
+                  </main>
+                </SearchProvider>
+              </CartProvider>
+            </TranslationProvider>
+          </ThemeProvider>
+        </AuthProvider>
       </body>
     </html>
   );

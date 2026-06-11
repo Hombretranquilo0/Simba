@@ -14,10 +14,44 @@ model Product {
   category       String
   subcategoryId  Int?
   inStock        Boolean  @default(true)
+  stockQuantity  Int      @default(0)
   image          String?
   unit           String?
   description    String?
   translations   Json?    // Stores localized content: { name: { en: "...", fr: "..." }, ... }
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+  orderItems     OrderItem[]
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String?
+  role      String   @default("user") // "user" or "manager"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  orders    Order[]
+}
+
+model Order {
+  id          Int         @id @default(autoincrement())
+  userId      Int
+  user        User        @relation(fields: [userId], references: [id])
+  items       OrderItem[]
+  total       Float
+  status      String      @default("pending")
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model OrderItem {
+  id        Int     @id @default(autoincrement())
+  orderId   Int
+  order     Order   @relation(fields: [orderId], references: [id])
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Float
 }

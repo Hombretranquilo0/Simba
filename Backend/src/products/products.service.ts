@@ -5,8 +5,17 @@ import { PrismaService } from '../prisma/prisma.service';
 export class ProductsService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll() {
+  async findAll(filters?: { minPrice?: number; maxPrice?: number }) {
+    const where: any = {};
+    
+    if (filters?.minPrice !== undefined || filters?.maxPrice !== undefined) {
+      where.price = {};
+      if (filters.minPrice !== undefined) where.price.gte = filters.minPrice;
+      if (filters.maxPrice !== undefined) where.price.lte = filters.maxPrice;
+    }
+
     return this.prisma.product.findMany({
+      where,
       orderBy: { id: 'asc' },
     });
   }

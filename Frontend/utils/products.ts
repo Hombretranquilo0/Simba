@@ -3,9 +3,14 @@ import { Locale } from './i18n';
 
 const API_URL = 'http://localhost:3001';
 
-export const getProducts = async (): Promise<Product[]> => {
+export const getProducts = async (filters?: { minPrice?: number; maxPrice?: number }): Promise<Product[]> => {
   try {
-    const response = await fetch(`${API_URL}/products`);
+    const params = new URLSearchParams();
+    if (filters?.minPrice !== undefined) params.append('minPrice', filters.minPrice.toString());
+    if (filters?.maxPrice !== undefined) params.append('maxPrice', filters.maxPrice.toString());
+    
+    const url = `${API_URL}/products${params.toString() ? `?${params.toString()}` : ''}`;
+    const response = await fetch(url);
     if (!response.ok) throw new Error('Failed to fetch products');
     return await response.json();
   } catch (error) {

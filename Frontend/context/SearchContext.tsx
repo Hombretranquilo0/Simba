@@ -6,6 +6,14 @@ interface SearchContextType {
   searchTerm: string;
   debouncedSearchTerm: string;
   setSearchTerm: (term: string) => void;
+  priceRange: [number, number];
+  setPriceRange: (range: [number, number]) => void;
+  minPriceLimit: number;
+  maxPriceLimit: number;
+  setMinPriceLimit: (price: number) => void;
+  setMaxPriceLimit: (price: number) => void;
+  inStockOnly: boolean;
+  setInStockOnly: (val: boolean) => void;
 }
 
 const SearchContext = createContext<SearchContextType | undefined>(undefined);
@@ -13,6 +21,10 @@ const SearchContext = createContext<SearchContextType | undefined>(undefined);
 export const SearchProvider = ({ children }: { children: ReactNode }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000000]);
+  const [minPriceLimit, setMinPriceLimit] = useState(0);
+  const [maxPriceLimit, setMaxPriceLimit] = useState(1000000);
+  const [inStockOnly, setInStockOnly] = useState(false);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -25,7 +37,21 @@ export const SearchProvider = ({ children }: { children: ReactNode }) => {
   }, [searchTerm]);
 
   return (
-    <SearchContext.Provider value={{ searchTerm, debouncedSearchTerm, setSearchTerm }}>
+    <SearchContext.Provider 
+      value={{ 
+        searchTerm, 
+        debouncedSearchTerm, 
+        setSearchTerm,
+        priceRange,
+        setPriceRange,
+        minPriceLimit,
+        maxPriceLimit,
+        setMinPriceLimit,
+        setMaxPriceLimit,
+        inStockOnly,
+        setInStockOnly
+      }}
+    >
       {children}
     </SearchContext.Provider>
   );
