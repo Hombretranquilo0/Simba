@@ -43,8 +43,8 @@ export default function ProductImageGallery({ images, alt }: ProductImageGallery
               onClick={() => setSelectedImage(image)}
               className={`aspect-square bg-white dark:bg-gray-900 rounded-2xl border p-2 overflow-hidden transition-colors ${
                 isSelected
-                  ? 'border-green-500'
-                  : 'border-gray-100 dark:border-gray-800 hover:border-green-500'
+                  ? 'border-simba-orange dark:border-green-500'
+                  : 'border-gray-100 dark:border-gray-800 hover:border-simba-orange dark:hover:border-green-500'
               }`}
               aria-label={alt}
               aria-pressed={isSelected}

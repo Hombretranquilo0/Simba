@@ -56,12 +56,22 @@ export class ManagerService {
 
     const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
     
-    // Group revenue by day for charts (basic implementation)
-    const revenueByDay = orders.reduce((acc, order) => {
+    // Initialize last 7 days with 0 revenue
+    const revenueByDay = {};
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const day = date.toISOString().split('T')[0];
+      revenueByDay[day] = 0;
+    }
+
+    // Fill in actual revenue
+    orders.forEach((order) => {
       const day = order.createdAt.toISOString().split('T')[0];
-      acc[day] = (acc[day] || 0) + order.total;
-      return acc;
-    }, {});
+      if (revenueByDay[day] !== undefined) {
+        revenueByDay[day] += order.total;
+      }
+    });
 
     return {
       totalRevenue,

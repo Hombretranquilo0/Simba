@@ -2,6 +2,10 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@theme {
+  --color-simba-orange: #F06E15;
+}
+
 :root {
   --background: #fdfdfd;
   --foreground: #0f172a;
@@ -10,7 +14,7 @@
   --muted: #f1f5f9;
   --muted-foreground: #64748b;
   --border: #e2e8f0;
-  --primary: #15803d;
+  --primary: #F06E15;
   --secondary: #f97316;
 }
 

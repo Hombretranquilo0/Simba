@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCart, Search, Menu, X, User as UserIcon, LogOut, LayoutDashboard } from 'lucide-react';
+import { ShoppingCart, Search, Menu, X, User as UserIcon, LogOut, LayoutDashboard, ShoppingBag as OrdersIcon } from 'lucide-react';
 import { useSearch } from '@/context/SearchContext';
 import { useCart } from '@/context/CartContext';
 import { useTranslation } from '@/context/TranslationContext';
@@ -27,7 +27,7 @@ const Navbar = ({ locale }: { locale: Locale }) => {
         <Link href={`/${locale}`} className="flex-shrink-0 group">
           <motion.h1 
             whileHover={{ scale: 1.05 }}
-            className="text-xl font-black text-green-700 dark:text-green-500 tracking-tighter sm:text-2xl"
+            className="text-xl font-black text-simba-orange dark:text-green-500 tracking-tighter sm:text-2xl"
           >
             SIMBA<span className="text-orange-500">SHOP</span>
           </motion.h1>
@@ -38,11 +38,11 @@ const Navbar = ({ locale }: { locale: Locale }) => {
           <input
             type="text"
             placeholder={t('common.search')}
-            className="w-full px-5 py-2.5 pl-12 bg-gray-100/50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-900 dark:text-gray-100 border-2 border-transparent focus:border-green-600/30 dark:focus:border-green-500/30 rounded-2xl focus:ring-0 outline-none transition-all duration-300"
+            className="w-full px-5 py-2.5 pl-12 bg-gray-100/50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-900 dark:text-gray-100 border-2 border-transparent focus:border-simba-orange/30 dark:focus:border-green-500/30 rounded-2xl focus:ring-0 outline-none transition-all duration-300"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <Search className="absolute left-4 top-3 text-gray-400 group-focus-within:text-green-600 transition-colors" size={20} />
+          <Search className="absolute left-4 top-3 text-gray-400 group-focus-within:text-simba-orange transition-colors" size={20} />
           {searchTerm && (
             <button 
               onClick={() => setSearchTerm('')}
@@ -95,7 +95,7 @@ const Navbar = ({ locale }: { locale: Locale }) => {
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                   className="flex items-center gap-2 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 transition-colors"
                 >
-                  <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center text-green-700 dark:text-green-300 font-bold">
+                  <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-green-900 flex items-center justify-center text-simba-orange dark:text-green-300 font-bold">
                     {user?.name?.[0]?.toUpperCase() || 'U'}
                   </div>
                   <span className="hidden lg:block text-sm font-medium">{user?.name}</span>
@@ -113,12 +113,21 @@ const Navbar = ({ locale }: { locale: Locale }) => {
                         <p className="text-xs text-gray-500 dark:text-gray-400">Signed in as</p>
                         <p className="text-sm font-bold truncate">{user?.email}</p>
                       </div>
+
+                      <Link 
+                        href={`/${locale}/orders`}
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-2 transition-colors border-b border-gray-50 dark:border-gray-800"
+                      >
+                        <OrdersIcon size={16} />
+                        My Orders
+                      </Link>
                       
                       {user?.role === 'manager' && (
                         <Link 
                           href={`/${locale}/manager`}
                           onClick={() => setIsUserMenuOpen(false)}
-                          className="w-full text-left px-4 py-2 text-sm text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 flex items-center gap-2 transition-colors border-b border-gray-50 dark:border-gray-800"
+                          className="w-full text-left px-4 py-2 text-sm text-simba-orange hover:bg-orange-50 dark:hover:bg-green-900/20 flex items-center gap-2 transition-colors border-b border-gray-50 dark:border-gray-800"
                         >
                           <LayoutDashboard size={16} />
                           Manager Dashboard
@@ -140,13 +149,13 @@ const Navbar = ({ locale }: { locale: Locale }) => {
               <div className="hidden md:flex items-center gap-2">
                 <Link 
                   href={`/${locale}/login`}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-green-600 transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-simba-orange transition-colors"
                 >
                   Login
                 </Link>
                 <Link 
                   href={`/${locale}/signup`}
-                  className="px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-xl transition-all shadow-md shadow-green-600/20"
+                  className="px-4 py-2 text-sm font-medium text-white bg-simba-orange hover:bg-orange-600 rounded-xl transition-all shadow-md shadow-simba-orange/20"
                 >
                   Sign Up
                 </Link>
@@ -174,7 +183,7 @@ const Navbar = ({ locale }: { locale: Locale }) => {
                 type="text"
                 autoFocus
                 placeholder={t('common.search')}
-                className="w-full px-5 py-3 pl-12 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-none rounded-2xl focus:ring-2 focus:ring-green-500/50 outline-none"
+                className="w-full px-5 py-3 pl-12 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-none rounded-2xl focus:ring-2 focus:ring-simba-orange/50 outline-none"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />

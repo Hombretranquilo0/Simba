@@ -125,7 +125,7 @@ const ProductList = ({ initialProducts }: ProductListProps) => {
             <div className="space-y-3">
               <button 
                 onClick={() => setPriceRange([minPriceLimit, maxPriceLimit])}
-                className="w-full text-left px-4 py-2 text-sm font-bold text-gray-500 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-xl transition-all"
+                className="w-full text-left px-4 py-2 text-sm font-bold text-gray-500 hover:text-simba-orange hover:bg-orange-50 dark:hover:bg-green-900/20 rounded-xl transition-all"
               >
                 Reset Price
               </button>
@@ -133,8 +133,8 @@ const ProductList = ({ initialProducts }: ProductListProps) => {
                 onClick={() => setInStockOnly(!inStockOnly)}
                 className={`w-full text-left px-4 py-2 text-sm font-bold rounded-xl transition-all ${
                   inStockOnly 
-                    ? 'text-green-700 bg-green-50 dark:bg-green-900/20' 
-                    : 'text-gray-500 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20'
+                    ? 'text-simba-orange bg-orange-50 dark:bg-green-900/20' 
+                    : 'text-gray-500 hover:text-simba-orange hover:bg-orange-50 dark:hover:bg-green-900/20'
                 }`}
               >
                 {inStockOnly ? '✓ In Stock Only' : 'In Stock Only'}
@@ -145,7 +145,7 @@ const ProductList = ({ initialProducts }: ProductListProps) => {
                 <select 
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as any)}
-                  className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-xl text-sm font-bold text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-green-500/20"
+                  className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-xl text-sm font-bold text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-simba-orange/20"
                 >
                   <option value="name-asc">Name (A-Z)</option>
                   <option value="price-asc">Price (Low to High)</option>
@@ -176,7 +176,7 @@ const ProductList = ({ initialProducts }: ProductListProps) => {
             </p>
             <button 
               onClick={handleResetFilters}
-              className="mt-8 text-green-700 dark:text-green-500 font-bold hover:underline"
+              className="mt-8 text-simba-orange dark:text-green-500 font-bold hover:underline"
             >
               Clear all filters
             </button>
@@ -193,7 +193,7 @@ const ProductList = ({ initialProducts }: ProductListProps) => {
             >
               <div className="flex items-center justify-between mb-8 border-b border-gray-100 dark:border-gray-800 pb-4">
                 <div className="flex items-center gap-4">
-                  <div className="w-3 h-10 bg-green-600 dark:bg-green-500 rounded-full shadow-lg shadow-green-600/20" />
+                  <div className="w-3 h-10 bg-simba-orange dark:bg-green-500 rounded-full shadow-lg shadow-simba-orange/20" />
                   <div>
                     <h2 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">
                       {translateCategory(category, dictionary)}
@@ -204,7 +204,7 @@ const ProductList = ({ initialProducts }: ProductListProps) => {
                   </div>
                 </div>
                 
-                <button className="text-green-700 dark:text-green-500 font-bold text-sm hover:underline flex items-center gap-1">
+                <button className="text-simba-orange dark:text-green-500 font-bold text-sm hover:underline flex items-center gap-1">
                   View All
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />

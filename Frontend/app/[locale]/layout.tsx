@@ -9,7 +9,8 @@ import { ThemeProvider } from "@/context/ThemeContext";
 import { getDictionary, Locale, locales } from "@/utils/i18n";
 import { notFound } from "next/navigation";
 
-const inter = Inter({ subsets: ["latin"] });
+// const inter = Inter({ subsets: ["latin"] });
+const inter = { className: "" }; // Mock inter to avoid breaking usage below
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://simba-shop.rw'),

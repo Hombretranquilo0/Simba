@@ -33,7 +33,7 @@ export default function ManagerDashboard() {
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold flex items-center gap-2">
-          <LayoutDashboard className="text-green-600" />
+          <LayoutDashboard className="text-simba-orange" />
           Manager Dashboard
         </h1>
         <div className="text-sm text-gray-500 bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-full">
@@ -50,7 +50,7 @@ export default function ManagerDashboard() {
               onClick={() => setActiveTab(tab.id)}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                 activeTab === tab.id
-                  ? 'bg-green-600 text-white shadow-lg shadow-green-600/20'
+                  ? 'bg-simba-orange text-white shadow-lg shadow-simba-orange/20'
                   : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
               }`}
             >

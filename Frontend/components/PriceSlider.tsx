@@ -69,7 +69,7 @@ const PriceSlider = ({ min, max }: PriceSliderProps) => {
           {t('common.priceRange') || 'Price Range'}
         </h3>
         <div className="flex items-center gap-2">
-           <span className="text-xs font-bold text-green-700 dark:text-green-500 bg-green-50 dark:bg-green-900/30 px-2 py-1 rounded-lg">
+           <span className="text-xs font-bold text-simba-orange dark:text-green-500 bg-orange-50 dark:bg-green-900/30 px-2 py-1 rounded-lg">
              {minVal.toLocaleString()} - {maxVal.toLocaleString()} RWF
            </span>
         </div>
@@ -132,7 +132,7 @@ const PriceSlider = ({ min, max }: PriceSliderProps) => {
         }
 
         .slider__range {
-          background-color: #15803d;
+          background-color: #F06E15;
           z-index: 2;
         }
 
@@ -159,7 +159,7 @@ const PriceSlider = ({ min, max }: PriceSliderProps) => {
         /* Webkit browsers */
         .thumb::-webkit-slider-thumb {
           background-color: #ffffff;
-          border: 3px solid #15803d;
+          border: 3px solid #F06E15;
           border-radius: 50%;
           box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
           cursor: pointer;
@@ -178,7 +178,7 @@ const PriceSlider = ({ min, max }: PriceSliderProps) => {
         /* Firefox browsers */
         .thumb::-moz-range-thumb {
           background-color: #ffffff;
-          border: 3px solid #15803d;
+          border: 3px solid #F06E15;
           border-radius: 50%;
           box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
           cursor: pointer;
