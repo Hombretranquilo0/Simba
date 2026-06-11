@@ -1,0 +1,23 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id             Int      @id @default(autoincrement())
+  name           String
+  price          Float
+  category       String
+  subcategoryId  Int?
+  inStock        Boolean  @default(true)
+  image          String?
+  unit           String?
+  description    String?
+  translations   Json?    // Stores localized content: { name: { en: "...", fr: "..." }, ... }
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}

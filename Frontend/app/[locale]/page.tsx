@@ -6,12 +6,18 @@ import { useTranslation } from '@/context/TranslationContext';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { Product } from '@/types/product';
 
 export default function Home() {
-  const products = getProducts();
+  const [products, setProducts] = useState<Product[]>([]);
   const { t } = useTranslation();
   const params = useParams();
   const locale = params.locale as string;
+
+  useEffect(() => {
+    getProducts().then(setProducts);
+  }, []);
 
   return (
     <motion.div 

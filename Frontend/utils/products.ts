@@ -1,17 +1,32 @@
-import productsData from '@/data/products.json';
-import { Product, ApiResponse } from '@/types/product';
+import { Product } from '@/types/product';
 import { Locale } from './i18n';
 
-export const getProducts = (): Product[] => {
-  return (productsData as ApiResponse).products;
+const API_URL = 'http://localhost:3001';
+
+export const getProducts = async (): Promise<Product[]> => {
+  try {
+    const response = await fetch(`${API_URL}/products`);
+    if (!response.ok) throw new Error('Failed to fetch products');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    return [];
+  }
 };
 
-export const getProductById = (id: number): Product | undefined => {
-  return (productsData as ApiResponse).products.find((p: Product) => p.id === id);
+export const getProductById = async (id: number): Promise<Product | undefined> => {
+  try {
+    const response = await fetch(`${API_URL}/products/${id}`);
+    if (!response.ok) return undefined;
+    return await response.json();
+  } catch (error) {
+    console.error(`Error fetching product ${id}:`, error);
+    return undefined;
+  }
 };
 
-export const getProductsByCategory = (): Record<string, Product[]> => {
-  const products = getProducts();
+export const getProductsByCategory = async (): Promise<Record<string, Product[]>> => {
+  const products = await getProducts();
   return products.reduce((acc, product: Product) => {
     if (!acc[product.category]) {
       acc[product.category] = [];
@@ -23,7 +38,7 @@ export const getProductsByCategory = (): Record<string, Product[]> => {
 
 const translateField = (
   value: string | undefined,
-  translations: Record<string, string> | undefined,
+  translations: any | undefined,
   locale: Locale,
   fallback: string
 ): string => {
@@ -38,7 +53,7 @@ export const getProductTranslation = (
   field: 'name' | 'category' | 'description',
   locale: Locale
 ): string => {
-  const translations = product.translations;
+  const translations = product.translations as any;
   switch (field) {
     case 'name':
       return translateField(product.name, translations?.name, locale, product.name);
