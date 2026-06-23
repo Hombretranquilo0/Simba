@@ -49,6 +49,7 @@ const ProductCard = ({ product, locale: propLocale }: ProductCardProps) => {
   // Logic for badges (simulated for UI)
   const isNew = product.id % 5 === 0;
   const isPopular = product.id % 7 === 0;
+  const discountedPrice = product.discount ? Math.round(product.price * (1 - product.discount / 100)) : null;
 
   return (
     <motion.div
@@ -61,6 +62,11 @@ const ProductCard = ({ product, locale: propLocale }: ProductCardProps) => {
     >
       {/* Badges */}
       <div className="absolute top-3 left-3 z-10 flex flex-col gap-2">
+        {product.discount && product.discount > 0 && (
+          <span className="bg-orange-500 text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-widest shadow-lg shadow-orange-500/20">
+            -{product.discount}%
+          </span>
+        )}
         {isNew && (
           <span className="bg-blue-500 text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-widest shadow-lg shadow-blue-500/20">
             New
@@ -91,7 +97,7 @@ const ProductCard = ({ product, locale: propLocale }: ProductCardProps) => {
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             whileHover={{ scale: 1, opacity: 1 }}
-            className="bg-white dark:bg-gray-900 p-3 rounded-full shadow-xl text-simba-orange dark:text-green-500"
+            className="bg-white dark:bg-gray-900 p-3 rounded-full shadow-xl text-simba-orange dark:text-simba-gold"
           >
             <Eye size={24} />
           </motion.div>
@@ -101,13 +107,13 @@ const ProductCard = ({ product, locale: propLocale }: ProductCardProps) => {
       {/* Content */}
       <div className="p-5 flex flex-col flex-grow">
         <div className="flex items-center gap-1 mb-2">
-          <span className="text-[10px] font-bold text-simba-orange dark:text-green-500 uppercase tracking-widest">
+          <span className="text-[10px] font-bold text-simba-orange dark:text-simba-gold uppercase tracking-widest">
             {translatedCategory}
           </span>
         </div>
 
-        <Link href={`/${locale}/product/${product.id}`} className="hover:text-simba-orange dark:hover:text-green-500 transition-colors">
-          <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm sm:text-base leading-snug line-clamp-2 min-h-[2.5rem] mb-2 group-hover:text-simba-orange dark:group-hover:text-green-500 transition-colors">
+        <Link href={`/${locale}/product/${product.id}`} className="hover:text-simba-orange dark:hover:text-simba-gold transition-colors">
+          <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm sm:text-base leading-snug line-clamp-2 min-h-[2.5rem] mb-2 group-hover:text-simba-orange dark:group-hover:text-simba-gold transition-colors">
             {highlightText(product.name, searchTerm)}
           </h3>
         </Link>
@@ -122,9 +128,20 @@ const ProductCard = ({ product, locale: propLocale }: ProductCardProps) => {
         <div className="mt-auto pt-4 border-t border-gray-50 dark:border-gray-800">
           <div className="flex items-center justify-between mb-4">
             <div className="flex flex-col">
-              <span className="text-xl font-black text-gray-900 dark:text-white">
-                {product.price.toLocaleString()} <span className="text-[10px] font-bold text-gray-400 uppercase">RWF</span>
-              </span>
+              {discountedPrice ? (
+                <>
+                  <span className="text-xl font-black text-orange-500">
+                    {discountedPrice.toLocaleString()} <span className="text-[10px] font-bold text-orange-400 uppercase">RWF</span>
+                  </span>
+                  <span className="text-sm line-through text-gray-400">
+                    {product.price.toLocaleString()} RWF
+                  </span>
+                </>
+              ) : (
+                <span className="text-xl font-black text-gray-900 dark:text-white">
+                  {product.price.toLocaleString()} <span className="text-[10px] font-bold text-gray-400 uppercase">RWF</span>
+                </span>
+              )}
               {product.unit && (
                 <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                   {t('common.per')} {product.unit}
@@ -135,7 +152,7 @@ const ProductCard = ({ product, locale: propLocale }: ProductCardProps) => {
             <motion.button 
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
-              className="bg-simba-orange hover:bg-orange-600 dark:bg-green-700 dark:hover:bg-green-600 text-white p-3 rounded-xl transition-colors shadow-lg shadow-simba-orange/20 active:shadow-none" 
+              className="bg-simba-orange hover:bg-orange-600 dark:bg-simba-gold dark:hover:bg-simba-gold/80 text-white p-3 rounded-xl transition-colors shadow-lg shadow-simba-orange/20 active:shadow-none" 
               title={t('common.addToCart')}
               onClick={(e) => {
                 e.preventDefault();
@@ -148,7 +165,7 @@ const ProductCard = ({ product, locale: propLocale }: ProductCardProps) => {
 
           <Link 
             href={`/${locale}/product/${product.id}`}
-            className="block text-center py-2.5 text-sm font-bold text-simba-orange dark:text-green-500 border-2 border-simba-orange/10 dark:border-green-500/10 rounded-xl hover:bg-orange-50 dark:hover:bg-green-900/20 transition-all duration-300"
+            className="block text-center py-2.5 text-sm font-bold text-simba-orange dark:text-simba-gold border-2 border-simba-orange/10 dark:border-simba-gold/10 rounded-xl hover:bg-orange-50 dark:hover:bg-simba-gold/10 transition-all duration-300"
           >
             {t('common.viewDetails')}
           </Link>

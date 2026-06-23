@@ -3,38 +3,49 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, ShoppingBag, CreditCard, DollarSign, BarChart3, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
+import API_URL from '@/utils/api';
 
-export default function Revenue({ token }: { token: string }) {
+export default function Revenue({ token, onUnauthorized }: { token: string; onUnauthorized?: () => void }) {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('http://localhost:3001/manager/revenue', {
+    fetch(`${API_URL}/manager/revenue`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((res) => res.json())
+      .then(async (res) => {
+        if (!res.ok) {
+          const body = await res.text();
+          if (res.status === 401 || res.status === 403) onUnauthorized?.();
+          throw new Error(`${res.status}: ${body}`);
+        }
+        return res.json();
+      })
       .then((data) => {
         setStats(data);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch((err) => {
+        console.error('Revenue fetch error:', err);
+        setLoading(false);
+      });
   }, [token]);
 
   if (loading) return (
     <div className="flex flex-col items-center justify-center h-64 space-y-4">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#f59a0a]"></div>
       <p className="text-gray-500 font-medium">Fetching real-time financial data...</p>
     </div>
   );
   
-  if (!stats) return (
+  if (!stats || !stats.revenueByDay) return (
     <div className="bg-red-50 dark:bg-red-900/10 p-6 rounded-2xl border border-red-100 text-center">
       <p className="text-red-600 font-bold">Failed to retrieve revenue data from database.</p>
     </div>
   );
 
-  const revenueEntries = Object.entries(stats.revenueByDay).sort((a, b) => a[0].localeCompare(b[0]));
-  const maxAmount = Math.max(...Object.values(stats.revenueByDay) as number[], 1000);
+  const revenueEntries = Object.entries(stats.revenueByDay || {}).sort((a, b) => a[0].localeCompare(b[0]));
+  const maxAmount = Math.max(...Object.values(stats.revenueByDay || {}) as number[], 1000);
 
   return (
     <motion.div 
@@ -44,7 +55,7 @@ export default function Revenue({ token }: { token: string }) {
     >
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-black tracking-tight">Financial Analytics</h2>
-        <div className="flex items-center gap-2 bg-orange-100 dark:bg-green-900/30 text-simba-orange dark:text-green-400 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+        <div className="flex items-center gap-2 bg-orange-100 dark:bg-simba-gold/15 text-simba-orange dark:text-simba-gold px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
           <Clock size={12} />
           <span>Live Database Feed</span>
         </div>

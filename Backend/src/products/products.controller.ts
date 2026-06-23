@@ -16,6 +16,11 @@ export class ProductsController {
     });
   }
 
+  @Get('discounted')
+  async findDiscounted() {
+    return this.productsService.findDiscounted();
+  }
+
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number) {
     return this.productsService.findOne(id);

@@ -10,6 +10,10 @@ import { ProductGridSkeleton } from './ProductSkeleton';
 import { translateCategory } from '@/utils/i18n';
 import { useParams } from 'next/navigation';
 import PriceSlider from './PriceSlider';
+import { Loader2 } from 'lucide-react';
+import Link from 'next/link';
+
+import API_URL from '@/utils/api';
 
 interface ProductListProps {
   initialProducts: Product[];
@@ -32,6 +36,44 @@ const ProductList = ({ initialProducts }: ProductListProps) => {
   const locale = params.locale as string;
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [sortBy, setSortBy] = useState<'price-asc' | 'price-desc' | 'name-asc'>('name-asc');
+  const [aiResults, setAiResults] = useState<Product[] | null>(null);
+  const [aiSearching, setAiSearching] = useState(false);
+
+  // AI search effect: when debouncedSearchTerm changes, call backend
+  useEffect(() => {
+    if (!debouncedSearchTerm.trim()) {
+      setAiResults(null);
+      setAiSearching(false);
+      return;
+    }
+
+    setAiSearching(true);
+    const controller = new AbortController();
+
+    fetch(`${API_URL}/ai/search`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: debouncedSearchTerm }),
+      signal: controller.signal,
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error('AI search failed');
+        return res.json();
+      })
+      .then((data) => {
+        setAiResults(Array.isArray(data) ? data : []);
+        setAiSearching(false);
+      })
+      .catch((err) => {
+        if (err.name !== 'AbortError') {
+          console.error('AI search error, using client-side filter:', err);
+          setAiResults(null);
+          setAiSearching(false);
+        }
+      });
+
+    return () => controller.abort();
+  }, [debouncedSearchTerm]);
 
   // Initialize price limits based on initialProducts
   useEffect(() => {
@@ -55,6 +97,29 @@ const ProductList = ({ initialProducts }: ProductListProps) => {
   }, []);
 
   const filteredProducts = useMemo(() => {
+    // When AI search is active, use AI results
+    if (aiResults !== null) {
+      let results = [...aiResults];
+
+      // Apply client-side price and inStock filters on top of AI results
+      results = results.filter(
+        (product) => product.price >= priceRange[0] && product.price <= priceRange[1]
+      );
+      if (inStockOnly) {
+        results = results.filter((product) => product.inStock);
+      }
+
+      results.sort((a, b) => {
+        if (sortBy === 'price-asc') return a.price - b.price;
+        if (sortBy === 'price-desc') return b.price - a.price;
+        if (sortBy === 'name-asc') return a.name.localeCompare(b.name);
+        return 0;
+      });
+
+      return results;
+    }
+
+    // Default: client-side filtering
     let results = [...initialProducts];
 
     // Search filter
@@ -86,7 +151,7 @@ const ProductList = ({ initialProducts }: ProductListProps) => {
     });
 
     return results;
-  }, [debouncedSearchTerm, initialProducts, dictionary, priceRange, inStockOnly, sortBy]);
+  }, [debouncedSearchTerm, initialProducts, dictionary, priceRange, inStockOnly, sortBy, aiResults]);
 
   const groupedProducts = useMemo(() => {
     return filteredProducts.reduce((acc, product: Product) => {
@@ -99,6 +164,11 @@ const ProductList = ({ initialProducts }: ProductListProps) => {
   }, [filteredProducts]);
 
   const categories = Object.keys(groupedProducts).sort();
+
+  // All categories from full (unfiltered) product list for sidebar navigation
+  const allCategories = useMemo(() => {
+    return [...new Set(initialProducts.map(p => p.category))].sort();
+  }, [initialProducts]);
 
   if (isInitialLoading) {
     return <ProductGridSkeleton />;
@@ -125,7 +195,7 @@ const ProductList = ({ initialProducts }: ProductListProps) => {
             <div className="space-y-3">
               <button 
                 onClick={() => setPriceRange([minPriceLimit, maxPriceLimit])}
-                className="w-full text-left px-4 py-2 text-sm font-bold text-gray-500 hover:text-simba-orange hover:bg-orange-50 dark:hover:bg-green-900/20 rounded-xl transition-all"
+                className="w-full text-left px-4 py-2 text-sm font-bold text-gray-500 hover:text-simba-orange hover:bg-orange-50 dark:hover:bg-simba-gold/10 rounded-xl transition-all"
               >
                 Reset Price
               </button>
@@ -133,13 +203,12 @@ const ProductList = ({ initialProducts }: ProductListProps) => {
                 onClick={() => setInStockOnly(!inStockOnly)}
                 className={`w-full text-left px-4 py-2 text-sm font-bold rounded-xl transition-all ${
                   inStockOnly 
-                    ? 'text-simba-orange bg-orange-50 dark:bg-green-900/20' 
-                    : 'text-gray-500 hover:text-simba-orange hover:bg-orange-50 dark:hover:bg-green-900/20'
+                    ? 'text-simba-orange bg-orange-50 dark:bg-simba-gold/10' 
+                    : 'text-gray-500 hover:text-simba-orange hover:bg-orange-50 dark:hover:bg-simba-gold/10'
                 }`}
               >
                 {inStockOnly ? '✓ In Stock Only' : 'In Stock Only'}
               </button>
-              
               <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-3 ml-1">Sort By</p>
                 <select 
@@ -154,12 +223,21 @@ const ProductList = ({ initialProducts }: ProductListProps) => {
               </div>
             </div>
           </div>
+
         </div>
       </aside>
 
       {/* Main Content */}
       <div className="flex-grow space-y-20">
-        {filteredProducts.length === 0 ? (
+        {aiSearching ? (
+          <div className="flex flex-col items-center justify-center py-24 px-4">
+            <Loader2 size={48} className="animate-spin text-simba-orange mb-6" />
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">AI Searching...</h3>
+            <p className="text-gray-500 dark:text-gray-400 text-center max-w-md text-lg">
+              Analyzing your query &ldquo;{debouncedSearchTerm}&rdquo; with AI...
+            </p>
+          </div>
+        ) : filteredProducts.length === 0 ? (
           <motion.div 
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -176,7 +254,7 @@ const ProductList = ({ initialProducts }: ProductListProps) => {
             </p>
             <button 
               onClick={handleResetFilters}
-              className="mt-8 text-simba-orange dark:text-green-500 font-bold hover:underline"
+              className="mt-8 text-simba-orange dark:text-simba-gold font-bold hover:underline"
             >
               Clear all filters
             </button>
@@ -193,7 +271,7 @@ const ProductList = ({ initialProducts }: ProductListProps) => {
             >
               <div className="flex items-center justify-between mb-8 border-b border-gray-100 dark:border-gray-800 pb-4">
                 <div className="flex items-center gap-4">
-                  <div className="w-3 h-10 bg-simba-orange dark:bg-green-500 rounded-full shadow-lg shadow-simba-orange/20" />
+                  <div className="w-3 h-10 bg-simba-orange dark:bg-simba-gold rounded-full shadow-lg shadow-simba-orange/20" />
                   <div>
                     <h2 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">
                       {translateCategory(category, dictionary)}
@@ -204,17 +282,20 @@ const ProductList = ({ initialProducts }: ProductListProps) => {
                   </div>
                 </div>
                 
-                <button className="text-simba-orange dark:text-green-500 font-bold text-sm hover:underline flex items-center gap-1">
+                <Link
+                  href={`/${locale}/category/${encodeURIComponent(category)}`}
+                  className="text-simba-orange dark:text-simba-gold font-bold text-sm hover:underline flex items-center gap-1"
+                >
                   View All
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                   </svg>
-                </button>
+                </Link>
               </div>
               
               <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-8">
                 <AnimatePresence mode="popLayout">
-                  {groupedProducts[category].map((product) => (
+                  {groupedProducts[category].slice(0, 15).map((product) => (
                     <ProductCard key={product.id} product={product} locale={locale} />
                   ))}
                 </AnimatePresence>

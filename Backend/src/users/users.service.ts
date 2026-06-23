@@ -12,8 +12,21 @@ export class UsersService {
     });
   }
 
+  async findByGoogleId(googleId: string): Promise<User | null> {
+    return this.prisma.user.findUnique({
+      where: { googleId },
+    });
+  }
+
   async create(data: Prisma.UserCreateInput): Promise<User> {
     return this.prisma.user.create({
+      data,
+    });
+  }
+
+  async update(id: number, data: Prisma.UserUpdateInput): Promise<User> {
+    return this.prisma.user.update({
+      where: { id },
       data,
     });
   }

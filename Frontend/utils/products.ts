@@ -1,7 +1,7 @@
 import { Product } from '@/types/product';
 import { Locale } from './i18n';
 
-const API_URL = 'http://localhost:3001';
+import API_URL from './api';
 
 export const getProducts = async (filters?: { minPrice?: number; maxPrice?: number }): Promise<Product[]> => {
   try {
@@ -11,8 +11,12 @@ export const getProducts = async (filters?: { minPrice?: number; maxPrice?: numb
     
     const url = `${API_URL}/products${params.toString() ? `?${params.toString()}` : ''}`;
     const response = await fetch(url);
-    if (!response.ok) throw new Error('Failed to fetch products');
-    return await response.json();
+    if (!response.ok) {
+      console.error(`Fetch failed with status: ${response.status}`);
+      return [];
+    }
+    const data = await response.json();
+    return Array.isArray(data) ? data : [];
   } catch (error) {
     console.error('Error fetching products:', error);
     return [];
@@ -51,6 +55,25 @@ const translateField = (
     return translations[locale];
   }
   return value || fallback;
+};
+
+export const getRelatedProducts = async (product: Product, limit = 5): Promise<Product[]> => {
+  const all = await getProducts();
+  const others = all.filter(p => p.id !== product.id);
+
+  // Score: same category = 100 pts, minus price distance ratio (0–50 pts)
+  const maxPrice = Math.max(...others.map(p => p.price), 1);
+  const scored = others.map(p => {
+    const categoryScore = p.category === product.category ? 100 : 0;
+    const priceScore = 50 * (1 - Math.abs(p.price - product.price) / maxPrice);
+    return { product: p, score: categoryScore + priceScore };
+  });
+
+  scored.sort((a, b) => b.score - a.score);
+
+  // Return between 2 and limit results, only if there are at least 2
+  const top = scored.slice(0, limit).map(s => s.product);
+  return top.length >= 2 ? top : top;
 };
 
 export const getProductTranslation = (

@@ -69,7 +69,7 @@ const PriceSlider = ({ min, max }: PriceSliderProps) => {
           {t('common.priceRange') || 'Price Range'}
         </h3>
         <div className="flex items-center gap-2">
-           <span className="text-xs font-bold text-simba-orange dark:text-green-500 bg-orange-50 dark:bg-green-900/30 px-2 py-1 rounded-lg">
+           <span className="text-xs font-bold text-simba-orange dark:text-simba-gold bg-orange-50 dark:bg-simba-gold/15 px-2 py-1 rounded-lg">
              {minVal.toLocaleString()} - {maxVal.toLocaleString()} RWF
            </span>
         </div>
@@ -137,7 +137,7 @@ const PriceSlider = ({ min, max }: PriceSliderProps) => {
         }
 
         .dark .slider__range {
-          background-color: #22c55e;
+          background-color: #f59a0a;
         }
 
         /* Removing the default appearance */
@@ -172,7 +172,7 @@ const PriceSlider = ({ min, max }: PriceSliderProps) => {
 
         .dark .thumb::-webkit-slider-thumb {
           background-color: #111827;
-          border-color: #22c55e;
+          border-color: #f59a0a;
         }
 
         /* Firefox browsers */
@@ -190,7 +190,7 @@ const PriceSlider = ({ min, max }: PriceSliderProps) => {
         
         .dark .thumb::-moz-range-thumb {
           background-color: #111827;
-          border-color: #22c55e;
+          border-color: #f59a0a;
         }
       `}</style>
     </div>

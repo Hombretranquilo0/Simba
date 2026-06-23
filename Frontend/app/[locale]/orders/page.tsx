@@ -7,6 +7,7 @@ import { Package, Clock, CheckCircle2, AlertCircle, ShoppingBag, ArrowLeft, Refr
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useTranslation } from '@/context/TranslationContext';
+import API_URL from '@/utils/api';
 
 export default function OrdersPage() {
   const { token, isAuthenticated } = useAuth();
@@ -20,7 +21,7 @@ export default function OrdersPage() {
     if (!token) return;
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:3001/orders/me', {
+      const response = await fetch(`${API_URL}/orders/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (response.ok) {

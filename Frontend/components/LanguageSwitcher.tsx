@@ -51,8 +51,8 @@ const LanguageSwitcher = ({ currentLocale }: { currentLocale: Locale }) => {
             <button
               key={locale}
               onClick={() => switchLocale(locale)}
-              className={`w-full text-left px-4 py-3 text-sm hover:bg-orange-50 dark:hover:bg-green-900/20 transition-colors ${
-                currentLocale === locale ? 'text-simba-orange dark:text-green-500 font-bold bg-orange-50 dark:bg-green-900/20' : 'text-gray-700'
+              className={`w-full text-left px-4 py-3 text-sm hover:bg-orange-50 dark:hover:bg-simba-gold/10 transition-colors ${
+                currentLocale === locale ? 'text-simba-orange dark:text-simba-gold font-bold bg-orange-50 dark:bg-simba-gold/10' : 'text-gray-700'
               }`}
             >
               {languageNames[locale]}

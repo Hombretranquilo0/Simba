@@ -3,22 +3,34 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Package, User, Mail, Calendar, CreditCard, Clock, CheckCircle2, AlertCircle, Timer, Hash } from 'lucide-react';
+import API_URL from '@/utils/api';
 
-export default function Orders({ token }: { token: string }) {
+export default function Orders({ token, onUnauthorized }: { token: string; onUnauthorized?: () => void }) {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchOrders = () => {
     setLoading(true);
-    fetch('http://localhost:3001/manager/orders', {
+    fetch(`${API_URL}/manager/orders`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((res) => res.json())
+      .then(async (res) => {
+        if (!res.ok) {
+          const body = await res.text();
+          if (res.status === 401 || res.status === 403) onUnauthorized?.();
+          throw new Error(`${res.status}: ${body}`);
+        }
+        return res.json();
+      })
       .then((data) => {
-        setOrders(data);
+        setOrders(Array.isArray(data) ? data : []);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch((err) => {
+        console.error('Orders fetch error:', err);
+        setOrders([]);
+        setLoading(false);
+      });
   };
 
   useEffect(() => {
@@ -27,7 +39,7 @@ export default function Orders({ token }: { token: string }) {
 
   const updateStatus = async (id: number, status: string) => {
     try {
-      const response = await fetch(`http://localhost:3001/orders/${id}/status`, {
+      const response = await fetch(`${API_URL}/orders/${id}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -116,7 +128,7 @@ export default function Orders({ token }: { token: string }) {
                         </div>
                         <div>
                           <p className="text-xs font-black text-gray-400 uppercase tracking-tighter">Customer</p>
-                          <p className="font-bold text-gray-900 dark:text-white">{order.user.name}</p>
+                          <p className="font-bold text-gray-900 dark:text-white">{order?.user?.name ?? 'Unknown User'}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
@@ -126,7 +138,7 @@ export default function Orders({ token }: { token: string }) {
                         <div>
                           <p className="text-xs font-black text-gray-400 uppercase tracking-tighter">Placed On</p>
                           <p className="font-bold text-gray-900 dark:text-white">
-                            {new Date(order.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                            {order?.createdAt ? new Date(order.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'}
                           </p>
                         </div>
                       </div>
@@ -137,11 +149,11 @@ export default function Orders({ token }: { token: string }) {
                         <Package size={12} /> Items Ordered
                       </p>
                       <ul className="space-y-2">
-                        {order.items.map((item: any) => (
+                        {order?.items?.map((item: any) => (
                           <li key={item.id} className="flex justify-between items-center text-sm">
                             <span className="font-medium text-gray-700 dark:text-gray-300">
                               <span className="text-blue-500 font-black mr-2">{item.quantity}x</span>
-                              {item.product.name}
+                              {item?.product?.name ?? 'Unknown Product'}
                             </span>
                             <span className="font-black text-gray-900 dark:text-white">{(item.price * item.quantity).toLocaleString()} RWF</span>
                           </li>

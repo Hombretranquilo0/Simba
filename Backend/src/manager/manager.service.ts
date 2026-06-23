@@ -14,6 +14,7 @@ export class ManagerService {
         stockQuantity: true,
         category: true,
         inStock: true,
+        discount: true,
       },
     });
   }
@@ -80,7 +81,7 @@ export class ManagerService {
     };
   }
 
-  async updateProduct(id: number, data: { price?: number; stockQuantity?: number; inStock?: boolean }) {
+  async updateProduct(id: number, data: { price?: number; stockQuantity?: number; inStock?: boolean; discount?: number | null }) {
     return this.prisma.product.update({
       where: { id },
       data,

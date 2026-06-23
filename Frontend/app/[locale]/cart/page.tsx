@@ -11,15 +11,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
+import API_URL from '@/utils/api';
 
 export default function CartPage() {
   const { items, totalPrice, removeFromCart, increaseQuantity, decreaseQuantity, clearCart } = useCart();
-  const { isAuthenticated, token } = useAuth();
+  const { isAuthenticated, token, logout } = useAuth();
   const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
+  const [orderError, setOrderError] = useState<string | null>(null);
   
   const { t } = useTranslation();
   const params = useParams();
@@ -40,11 +42,11 @@ export default function CartPage() {
 
   const simulatePayment = async () => {
     setIsProcessing(true);
-    // Simulate network delay
+    setOrderError(null);
     await new Promise(resolve => setTimeout(resolve, 2000));
     
     try {
-      const response = await fetch('http://localhost:3001/orders', {
+      const response = await fetch(`${API_URL}/orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -56,7 +58,7 @@ export default function CartPage() {
             quantity: item.quantity,
             price: item.price
           })),
-          total: 500 // User requested exactly 500 RWF for simulation
+          total: totalPrice
         })
       });
 
@@ -67,9 +69,16 @@ export default function CartPage() {
           setShowPaymentModal(false);
           router.push(`/${locale}/orders`);
         }, 3000);
+      } else if (response.status === 401) {
+        logout();
+        setShowPaymentModal(false);
+        router.push(`/${locale}/login?redirect=cart`);
+      } else {
+        const err = await response.json().catch(() => ({}));
+        setOrderError(err.message || 'Order failed. Please try again.');
       }
     } catch (error) {
-      console.error('Payment failed', error);
+      setOrderError('Network error. Please check your connection and try again.');
     } finally {
       setIsProcessing(false);
     }
@@ -126,8 +135,8 @@ export default function CartPage() {
 
                   <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-6 mb-8 border border-gray-100 dark:border-gray-800">
                     <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-100 dark:border-gray-800">
-                      <span className="text-sm font-bold text-gray-400">Fixed Promo Rate</span>
-                      <span className="text-xl font-black text-simba-orange">500 RWF</span>
+                      <span className="text-sm font-bold text-gray-400">{t('common.total')}</span>
+                      <span className="text-xl font-black text-simba-orange">{totalPrice.toLocaleString()} RWF</span>
                     </div>
                     <div className="space-y-3">
                       <p className="text-xs text-gray-500 leading-relaxed">
@@ -137,6 +146,11 @@ export default function CartPage() {
                   </div>
 
                   <div className="space-y-4">
+                    {orderError && (
+                      <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl text-red-600 dark:text-red-400 text-sm font-bold text-center">
+                        {orderError}
+                      </div>
+                    )}
                     <motion.button 
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
@@ -150,11 +164,11 @@ export default function CartPage() {
                           Processing...
                         </>
                       ) : (
-                        <>Pay 500 RWF</>
+                        <>Pay {totalPrice.toLocaleString()} RWF</>
                       )}
                     </motion.button>
                     <button 
-                      onClick={() => setShowPaymentModal(false)}
+                      onClick={() => { setShowPaymentModal(false); setOrderError(null); }}
                       className="w-full py-3 text-gray-400 font-black uppercase tracking-widest text-[10px] hover:text-gray-600 transition-colors"
                     >
                       Cancel Transaction
@@ -220,7 +234,7 @@ export default function CartPage() {
                 
                 <div className="flex-grow min-w-0 w-full">
                   <div className="flex justify-between items-start mb-2">
-                    <Link href={`/${locale}/product/${item.id}`} className="hover:text-simba-orange dark:hover:text-green-500 transition-colors">
+                    <Link href={`/${locale}/product/${item.id}`} className="hover:text-simba-orange dark:hover:text-simba-gold transition-colors">
                       <h3 className="font-black text-gray-900 dark:text-gray-100 text-xl truncate pr-6 tracking-tight">{item.name}</h3>
                     </Link>
                     <button 
@@ -258,10 +272,10 @@ export default function CartPage() {
                     </div>
                     
                     <div className="text-right">
-                      <p className="text-xs font-bold text-gray-400 dark:text-gray-500 line-through mb-1">
-                        {item.price.toLocaleString()} RWF
+                      <p className="text-xs font-bold text-gray-400 dark:text-gray-500 mb-1">
+                        {item.quantity > 1 ? `${item.price.toLocaleString()} RWF each` : ''}
                       </p>
-                      <p className="text-2xl font-black text-simba-orange dark:text-green-500 tracking-tighter">
+                      <p className="text-2xl font-black text-simba-orange dark:text-simba-gold tracking-tighter">
                         {(item.price * item.quantity).toLocaleString()} <span className="text-sm">RWF</span>
                       </p>
                     </div>
@@ -273,7 +287,7 @@ export default function CartPage() {
           
           <Link 
             href={`/${locale}`} 
-            className="inline-flex items-center gap-3 text-simba-orange dark:text-green-500 font-black hover:gap-5 transition-all mt-6 uppercase tracking-widest text-xs"
+            className="inline-flex items-center gap-3 text-simba-orange dark:text-simba-gold font-black hover:gap-5 transition-all mt-6 uppercase tracking-widest text-xs"
           >
             <ArrowLeft size={16} />
             {t('common.continueShopping')}
@@ -296,13 +310,13 @@ export default function CartPage() {
               </div>
               <div className="flex justify-between text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest text-xs">
                 <span>{t('common.deliveryFee')}</span>
-                <span className="text-simba-orange dark:text-green-500 font-black text-sm">{t('common.free')}</span>
+                <span className="text-simba-orange dark:text-simba-gold font-black text-sm">{t('common.free')}</span>
               </div>
               <div className="h-px bg-gray-100 dark:bg-gray-800 my-2" />
               <div className="flex justify-between items-end">
                 <span className="text-gray-900 dark:text-white font-black uppercase tracking-tighter text-lg">{t('common.total')}</span>
                 <div className="text-right">
-                  <p className="text-3xl font-black text-simba-orange dark:text-green-500 tracking-tighter">
+                  <p className="text-3xl font-black text-simba-orange dark:text-simba-gold tracking-tighter">
                     {totalPrice.toLocaleString()} <span className="text-sm">RWF</span>
                   </p>
                 </div>

@@ -31,4 +31,11 @@ export class ProductsService {
       where: { category },
     });
   }
+
+  async findDiscounted() {
+    return this.prisma.product.findMany({
+      where: { discount: { gt: 0 } },
+      orderBy: { discount: 'desc' },
+    });
+  }
 }

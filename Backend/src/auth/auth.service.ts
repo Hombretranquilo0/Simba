@@ -12,7 +12,7 @@ export class AuthService {
 
   async validateUser(email: string, pass: string): Promise<any> {
     const user = await this.usersService.findOne(email);
-    if (user && await bcrypt.compare(pass, user.password)) {
+    if (user && user.password && await bcrypt.compare(pass, user.password)) {
       const { password, ...result } = user;
       return result;
     }
@@ -30,6 +30,33 @@ export class AuthService {
         role: user.role,
       }
     };
+  }
+
+  async validateGoogleUser(googleUser: any) {
+    const { email, googleId, firstName, lastName } = googleUser;
+    
+    // First, check if user exists with this googleId
+    let user = await this.usersService.findByGoogleId(googleId);
+    
+    if (!user) {
+      // Check if user exists with this email but no googleId
+      user = await this.usersService.findOne(email);
+      
+      if (user) {
+        // Link googleId to existing user
+        user = await this.usersService.update(user.id, { googleId });
+      } else {
+        // Create new user
+        user = await this.usersService.create({
+          email,
+          googleId,
+          name: `${firstName} ${lastName}`,
+          role: 'user', // Default role
+        });
+      }
+    }
+    
+    return user;
   }
 
   async signUp(email: string, pass: string, name: string) {

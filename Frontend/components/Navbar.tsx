@@ -1,24 +1,57 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCart, Search, Menu, X, User as UserIcon, LogOut, LayoutDashboard, ShoppingBag as OrdersIcon } from 'lucide-react';
+import { ShoppingCart, Search, Menu, X, User as UserIcon, LogOut, LayoutDashboard, ShoppingBag as OrdersIcon, ChevronDown } from 'lucide-react';
 import { useSearch } from '@/context/SearchContext';
+import API_URL from '@/utils/api';
 import { useCart } from '@/context/CartContext';
 import { useTranslation } from '@/context/TranslationContext';
 import { useAuth } from '@/context/AuthContext';
 import LanguageSwitcher from './LanguageSwitcher';
 import ThemeToggle from './ThemeToggle';
 import { Locale } from '@/utils/i18n';
+import { translateCategory } from '@/utils/i18n';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 const Navbar = ({ locale }: { locale: Locale }) => {
   const { searchTerm, setSearchTerm } = useSearch();
   const { totalItems } = useCart();
-  const { t } = useTranslation();
+  const { t, dictionary } = useTranslation();
   const { user, logout, isAuthenticated } = useAuth();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isCatOpen, setIsCatOpen] = useState(false);
+  const [categories, setCategories] = useState<string[]>([]);
+  const catRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetch(`${API_URL}/products`)
+      .then(r => r.ok ? r.json() : [])
+      .then((products: any[]) => {
+        const cats = [...new Set(products.map((p: any) => p.category as string))].sort();
+        setCategories(cats);
+      })
+      .catch(() => {});
+  }, []);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (catRef.current && !catRef.current.contains(e.target as Node)) {
+        setIsCatOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  // Open categories when Shop Now is clicked
+  useEffect(() => {
+    const handler = () => setIsCatOpen(true);
+    window.addEventListener('open-categories', handler);
+    return () => window.removeEventListener('open-categories', handler);
+  }, []);
 
   return (
     <nav className="sticky top-0 z-50 glass dark:bg-gray-950/80 border-b border-gray-200 dark:border-gray-800 px-4 py-3 shadow-sm transition-all duration-300">
@@ -27,18 +60,51 @@ const Navbar = ({ locale }: { locale: Locale }) => {
         <Link href={`/${locale}`} className="flex-shrink-0 group">
           <motion.h1 
             whileHover={{ scale: 1.05 }}
-            className="text-xl font-black text-simba-orange dark:text-green-500 tracking-tighter sm:text-2xl"
+            className="text-xl font-black text-simba-orange dark:text-simba-gold tracking-tighter sm:text-2xl"
           >
             SIMBA<span className="text-orange-500">SHOP</span>
           </motion.h1>
         </Link>
+
+        {/* Categories Dropdown */}
+        <div ref={catRef} className="hidden md:block relative flex-shrink-0">
+          <button
+            onClick={() => setIsCatOpen(v => !v)}
+            className="flex items-center gap-1.5 px-4 py-2.5 bg-gray-100/50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-2xl text-sm font-bold text-gray-700 dark:text-gray-300 transition-all"
+          >
+            {t('navbar.categories')}
+            <ChevronDown size={16} className={`transition-transform ${isCatOpen ? 'rotate-180' : ''}`} />
+          </button>
+          <AnimatePresence>
+            {isCatOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 8 }}
+                transition={{ duration: 0.15 }}
+                className="absolute left-0 top-full mt-2 w-64 bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800 py-2 z-50 max-h-[70vh] overflow-y-auto"
+              >
+                {categories.map(cat => (
+                  <Link
+                    key={cat}
+                    href={`/${locale}/category/${encodeURIComponent(cat)}`}
+                    onClick={() => setIsCatOpen(false)}
+                    className="block px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-simba-orange dark:hover:text-simba-gold hover:bg-orange-50 dark:hover:bg-simba-gold/10 transition-colors"
+                  >
+                    {translateCategory(cat, dictionary)}
+                  </Link>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
         {/* Desktop Search Bar */}
         <div className="hidden md:flex flex-grow max-w-xl relative group">
           <input
             type="text"
             placeholder={t('common.search')}
-            className="w-full px-5 py-2.5 pl-12 bg-gray-100/50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-900 dark:text-gray-100 border-2 border-transparent focus:border-simba-orange/30 dark:focus:border-green-500/30 rounded-2xl focus:ring-0 outline-none transition-all duration-300"
+            className="w-full px-5 py-2.5 pl-12 bg-gray-100/50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-900 dark:text-gray-100 border-2 border-transparent focus:border-simba-orange/30 dark:focus:border-simba-gold/30 rounded-2xl focus:ring-0 outline-none transition-all duration-300"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -56,6 +122,9 @@ const Navbar = ({ locale }: { locale: Locale }) => {
         {/* Right side icons */}
         <div className="flex items-center gap-1 sm:gap-3">
           <div className="hidden md:flex items-center gap-2">
+            <Link href={`/${locale}/about`} className="px-3 py-2 text-sm font-bold text-gray-600 dark:text-gray-300 hover:text-simba-orange dark:hover:text-simba-gold transition-colors">
+              About
+            </Link>
             <LanguageSwitcher currentLocale={locale} />
             <ThemeToggle />
           </div>
@@ -95,7 +164,7 @@ const Navbar = ({ locale }: { locale: Locale }) => {
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                   className="flex items-center gap-2 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 transition-colors"
                 >
-                  <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-green-900 flex items-center justify-center text-simba-orange dark:text-green-300 font-bold">
+                  <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-simba-gold/10 flex items-center justify-center text-simba-orange dark:text-simba-gold font-bold">
                     {user?.name?.[0]?.toUpperCase() || 'U'}
                   </div>
                   <span className="hidden lg:block text-sm font-medium">{user?.name}</span>
@@ -127,7 +196,7 @@ const Navbar = ({ locale }: { locale: Locale }) => {
                         <Link 
                           href={`/${locale}/manager`}
                           onClick={() => setIsUserMenuOpen(false)}
-                          className="w-full text-left px-4 py-2 text-sm text-simba-orange hover:bg-orange-50 dark:hover:bg-green-900/20 flex items-center gap-2 transition-colors border-b border-gray-50 dark:border-gray-800"
+                          className="w-full text-left px-4 py-2 text-sm text-simba-orange hover:bg-orange-50 dark:hover:bg-simba-gold/10 flex items-center gap-2 transition-colors border-b border-gray-50 dark:border-gray-800"
                         >
                           <LayoutDashboard size={16} />
                           Manager Dashboard

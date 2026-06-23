@@ -3,42 +3,107 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Edit2, Check, X, Loader2, Search, Package, Tag, Hash, Activity } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import API_URL from '@/utils/api';
 
-export default function Inventory({ token }: { token: string }) {
+export default function Inventory({ token, onUnauthorized }: { token: string; onUnauthorized?: () => void }) {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [editForm, setEditForm] = useState({ price: 0, stockQuantity: 0 });
+  const [editForm, setEditForm] = useState({ price: 0, stockQuantity: 0, discount: 0 });
   const [updating, setUpdating] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  useEffect(() => {
-    fetchInventory();
-  }, [token]);
-
-  const fetchInventory = () => {
+  // Fetch all products (no search)
+  const fetchAllProducts = () => {
     setLoading(true);
-    fetch('http://localhost:3001/manager/inventory', {
+    fetch(`${API_URL}/manager/inventory`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((res) => res.json())
+      .then(async (res) => {
+        if (!res.ok) {
+          const body = await res.text();
+          if (res.status === 401 || res.status === 403) onUnauthorized?.();
+          throw new Error(`${res.status}: ${body}`);
+        }
+        return res.json();
+      })
       .then((data) => {
-        setProducts(data);
+        setProducts(Array.isArray(data) ? data : []);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch((err) => {
+        console.error('Inventory fetch error:', err);
+        setProducts([]);
+        setLoading(false);
+      });
   };
 
-  const filteredProducts = useMemo(() => {
-    return products.filter(p => 
-      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.category.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [products, searchQuery]);
+  // Search products using AI
+  const searchProducts = (query: string) => {
+    setLoading(true);
+    fetch(`${API_URL}/ai/search`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ query }),
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error('Search failed');
+        return res.json();
+      })
+      .then((data) => {
+        setProducts(Array.isArray(data) ? data : []);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('AI search error, falling back to full inventory:', err);
+        // Fallback: fetch all products and filter locally by name/category
+        setLoading(true);
+        fetch(`${API_URL}/manager/inventory`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+          .then((res) => {
+            if (!res.ok) throw new Error('Failed to fetch inventory');
+            return res.json();
+          })
+          .then((data) => {
+            const allProducts = Array.isArray(data) ? data : [];
+            const lowerQuery = query.toLowerCase();
+            const filtered = allProducts.filter(
+              (p: any) =>
+                p.name.toLowerCase().includes(lowerQuery) ||
+                (p.category && p.category.toLowerCase().includes(lowerQuery))
+            );
+            setProducts(filtered);
+            setLoading(false);
+          })
+          .catch((fallbackErr) => {
+            console.error('Fallback fetch also failed:', fallbackErr);
+            setProducts([]);
+            setLoading(false);
+          });
+      });
+  };
+
+  // Fetch all products on mount and when token changes
+  useEffect(() => {
+    fetchAllProducts();
+  }, [token]);
+
+  // When searchQuery changes, perform search or fetch all if empty
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      fetchAllProducts();
+    } else {
+      searchProducts(searchQuery);
+    }
+  }, [searchQuery]);
 
   const startEditing = (product: any) => {
     setEditingId(product.id);
-    setEditForm({ price: product.price, stockQuantity: product.stockQuantity });
+    setEditForm({ price: product.price, stockQuantity: product.stockQuantity, discount: product.discount ?? 0 });
   };
 
   const cancelEditing = () => {
@@ -48,7 +113,7 @@ export default function Inventory({ token }: { token: string }) {
   const saveEdit = async (id: number) => {
     setUpdating(true);
     try {
-      const response = await fetch(`http://localhost:3001/manager/product/${id}`, {
+      const response = await fetch(`${API_URL}/manager/product/${id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -58,12 +123,18 @@ export default function Inventory({ token }: { token: string }) {
           price: parseFloat(editForm.price.toString()),
           stockQuantity: parseInt(editForm.stockQuantity.toString()),
           inStock: parseInt(editForm.stockQuantity.toString()) > 0,
+          discount: parseFloat(editForm.discount.toString()) || null,
         }),
       });
 
       if (response.ok) {
         setEditingId(null);
-        fetchInventory();
+        // Refetch based on current search state
+        if (searchQuery.trim() === '') {
+          fetchAllProducts();
+        } else {
+          searchProducts(searchQuery);
+        }
       }
     } catch (error) {
       console.error('Failed to update product', error);
@@ -80,7 +151,7 @@ export default function Inventory({ token }: { token: string }) {
   );
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       className="space-y-6"
@@ -104,7 +175,7 @@ export default function Inventory({ token }: { token: string }) {
             className="w-full pl-12 pr-4 py-3 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium"
           />
           {searchQuery && (
-            <button 
+            <button
               onClick={() => setSearchQuery('')}
               className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
             >
@@ -129,20 +200,21 @@ export default function Inventory({ token }: { token: string }) {
                   <div className="flex items-center gap-2"><Hash size={14} /> Price</div>
                 </th>
                 <th className="py-4 px-6 font-black text-xs uppercase tracking-widest text-gray-400">Stock</th>
+                <th className="py-4 px-6 font-black text-xs uppercase tracking-widest text-gray-400">Discount</th>
                 <th className="py-4 px-6 font-black text-xs uppercase tracking-widest text-gray-400">Status</th>
                 <th className="py-4 px-6 font-black text-xs uppercase tracking-widest text-gray-400 text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
               <AnimatePresence mode="popLayout">
-                {filteredProducts.map((product) => (
-                  <motion.tr 
+                {products.map((product) => (
+                  <motion.tr
                     layout
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    key={product.id} 
-                    className="group hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors"
+                    key={product.id}
+                    className="group hover:bg-gray-50/50 dark:bg-gray-800/30 transition-colors"
                   >
                     <td className="py-5 px-6 font-bold text-gray-900 dark:text-white">{product.name}</td>
                     <td className="py-5 px-6">
@@ -188,9 +260,32 @@ export default function Inventory({ token }: { token: string }) {
                       )}
                     </td>
                     <td className="py-5 px-6">
+                      {editingId === product.id ? (
+                        <div className="flex items-center gap-1 bg-white dark:bg-gray-800 border border-blue-500 rounded-xl px-2 py-1">
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            className="w-16 bg-transparent outline-none font-bold text-sm"
+                            value={editForm.discount}
+                            onChange={(e) => setEditForm({ ...editForm, discount: parseFloat(e.target.value) })}
+                          />
+                          <span className="text-xs font-bold text-blue-500">%</span>
+                        </div>
+                      ) : (
+                        product.discount ? (
+                          <span className="px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-lg text-xs font-black">
+                            -{product.discount}%
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 text-xs">—</span>
+                        )
+                      )}
+                    </td>
+                    <td className="py-5 px-6">
                       <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter ${
-                        product.inStock 
-                          ? 'bg-orange-100 dark:bg-green-900/30 text-simba-orange dark:text-green-400' 
+                        product.inStock
+                          ? 'bg-orange-100 dark:bg-simba-gold/15 text-simba-orange dark:text-simba-gold'
                           : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
                       }`}>
                         {product.inStock ? 'IN STOCK' : 'OUT OF STOCK'}
@@ -235,7 +330,7 @@ export default function Inventory({ token }: { token: string }) {
               </AnimatePresence>
             </tbody>
           </table>
-          {filteredProducts.length === 0 && (
+          {products.length === 0 && (
             <div className="py-20 text-center">
               <div className="inline-flex p-4 bg-gray-50 dark:bg-gray-800/50 rounded-full text-gray-400 mb-4">
                 <Search size={32} />
@@ -249,4 +344,3 @@ export default function Inventory({ token }: { token: string }) {
     </motion.div>
   );
 }
-

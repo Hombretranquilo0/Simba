@@ -4,15 +4,18 @@ import { locales, defaultLocale } from './utils/i18n';
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Check if the pathname already has a locale
   const pathnameHasLocale = locales.some(
     (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
   );
 
   if (pathnameHasLocale) return;
 
+  // Redirect to the default locale
   const locale = defaultLocale;
-  request.nextUrl.pathname = `/${locale}${pathname}`;
-  return NextResponse.redirect(request.nextUrl);
+  const url = request.nextUrl.clone();
+  url.pathname = `/${locale}${pathname}`;
+  return NextResponse.redirect(url);
 }
 
 export const config = {

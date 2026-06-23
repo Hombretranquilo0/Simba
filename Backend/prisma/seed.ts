@@ -3,7 +3,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as bcrypt from 'bcrypt';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  datasources: { db: { url: process.env.DIRECT_URL } },
+});
 
 async function main() {
   // Use absolute path or carefully constructed relative path

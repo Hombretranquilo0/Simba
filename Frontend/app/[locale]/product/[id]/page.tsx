@@ -1,9 +1,10 @@
-import { getProductById, getProductTranslation } from '@/utils/products';
+import { getProductById, getProductTranslation, getRelatedProducts } from '@/utils/products';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, ShieldCheck, Truck, RefreshCw, Star, Info } from 'lucide-react';
 import AddToCartButton from '@/components/AddToCartButton';
 import ProductImageGallery from '@/components/ProductImageGallery';
+import ProductCard from '@/components/ProductCard';
 import { createTranslator, getDictionary, Locale, translateCategory } from '@/utils/i18n';
 import { TranslationProvider } from '@/context/TranslationContext';
 import * as motion from "framer-motion/client"
@@ -50,7 +51,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
     notFound();
   }
 
-  const dictionary = await getDictionary(locale as Locale);
+  const [dictionary, related] = await Promise.all([
+    getDictionary(locale as Locale),
+    getRelatedProducts(product, 5),
+  ]);
   const imageUrl = product.image || 'https://via.placeholder.com/600x600?text=No+Image';
   const galleryImages = [imageUrl];
   const translatedName = getProductTranslation(product, 'name', locale as Locale);
@@ -68,7 +72,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Breadcrumbs */}
         <nav className="flex mb-10 text-sm font-medium text-gray-500 dark:text-gray-400">
-          <Link href={`/${locale}`} className="hover:text-simba-orange dark:hover:text-green-500 flex items-center gap-2 transition-colors">
+          <Link href={`/${locale}`} className="hover:text-simba-orange dark:hover:text-simba-gold flex items-center gap-2 transition-colors">
             <ArrowLeft size={18} />
             {t('common.backToShop')}
           </Link>
@@ -93,7 +97,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             className="flex flex-col"
           >
             <div className="mb-8">
-              <span className="inline-block bg-orange-100 dark:bg-green-900/30 text-simba-orange dark:text-green-400 text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-widest mb-4">
+              <span className="inline-block bg-orange-100 dark:bg-simba-gold/15 text-simba-orange dark:text-simba-gold text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-widest mb-4">
                 {translatedCategory}
               </span>
               <h1 className="text-4xl sm:text-5xl font-black text-gray-900 dark:text-white mb-4 tracking-tight leading-tight">
@@ -113,7 +117,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
             <div className="mb-10 p-6 bg-gray-50 dark:bg-gray-900/50 rounded-3xl border border-gray-100 dark:border-gray-800">
               <div className="flex items-baseline gap-3 mb-2">
-                <span className="text-5xl font-black text-simba-orange dark:text-green-500 tracking-tighter">
+                <span className="text-5xl font-black text-simba-orange dark:text-simba-gold tracking-tighter">
                   {product.price.toLocaleString()}
                 </span>
                 <span className="text-2xl font-bold text-gray-400 uppercase tracking-tighter">RWF</span>
@@ -125,9 +129,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
               </div>
               <div className="flex items-center gap-2">
                 {product.inStock ? (
-                  <div className="flex items-center gap-2 px-3 py-1 bg-orange-100 dark:bg-green-900/30 rounded-full">
-                    <div className="w-2 h-2 bg-simba-orange dark:bg-green-500 rounded-full animate-pulse" />
-                    <span className="text-simba-orange dark:text-green-400 text-xs font-bold uppercase tracking-wider">
+                  <div className="flex items-center gap-2 px-3 py-1 bg-orange-100 dark:bg-simba-gold/15 rounded-full">
+                    <div className="w-2 h-2 bg-simba-orange dark:bg-simba-gold rounded-full animate-pulse" />
+                    <span className="text-simba-orange dark:text-simba-gold text-xs font-bold uppercase tracking-wider">
                       {t('common.inStock')}
                     </span>
                   </div>
@@ -170,22 +174,22 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
               <div className="grid grid-cols-3 gap-4 pt-10 border-t border-gray-100 dark:border-gray-800 mt-10">
                 <div className="flex flex-col items-center text-center group">
-                  <div className="w-12 h-12 rounded-2xl bg-orange-50 dark:bg-green-900/20 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                    <ShieldCheck className="text-simba-orange dark:text-green-500" size={24} />
+                  <div className="w-12 h-12 rounded-2xl bg-orange-50 dark:bg-simba-gold/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                    <ShieldCheck className="text-simba-orange dark:text-simba-gold" size={24} />
                   </div>
                   <span className="text-[10px] font-black uppercase text-gray-400 dark:text-gray-500 mb-1">{t('common.quality')}</span>
                   <span className="text-xs font-bold text-gray-700 dark:text-gray-300 leading-tight">{t('common.genuine')}</span>
                 </div>
                 <div className="flex flex-col items-center text-center group">
-                  <div className="w-12 h-12 rounded-2xl bg-orange-50 dark:bg-green-900/20 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                    <Truck className="text-simba-orange dark:text-green-500" size={24} />
+                  <div className="w-12 h-12 rounded-2xl bg-orange-50 dark:bg-simba-gold/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                    <Truck className="text-simba-orange dark:text-simba-gold" size={24} />
                   </div>
                   <span className="text-[10px] font-black uppercase text-gray-400 dark:text-gray-500 mb-1">{t('common.delivery')}</span>
                   <span className="text-xs font-bold text-gray-700 dark:text-gray-300 leading-tight">{t('common.fastSecure')}</span>
                 </div>
                 <div className="flex flex-col items-center text-center group">
-                  <div className="w-12 h-12 rounded-2xl bg-orange-50 dark:bg-green-900/20 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                    <RefreshCw className="text-simba-orange dark:text-green-500" size={24} />
+                  <div className="w-12 h-12 rounded-2xl bg-orange-50 dark:bg-simba-gold/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                    <RefreshCw className="text-simba-orange dark:text-simba-gold" size={24} />
                   </div>
                   <span className="text-[10px] font-black uppercase text-gray-400 dark:text-gray-500 mb-1">{t('common.returns')}</span>
                   <span className="text-xs font-bold text-gray-700 dark:text-gray-300 leading-tight">{t('common.easyReturns')}</span>
@@ -194,6 +198,20 @@ export default async function ProductPage({ params }: ProductPageProps) {
             </div>
           </motion.div>
         </div>
+
+        {/* Related Products */}
+        {related.length >= 2 && (
+          <section className="mt-20 pt-12 border-t border-gray-100 dark:border-gray-800">
+            <h2 className="text-2xl font-black tracking-tight text-gray-900 dark:text-white mb-8">
+              You may also like
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {related.map(p => (
+                <ProductCard key={p.id} product={p} locale={locale} />
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </TranslationProvider>
   );

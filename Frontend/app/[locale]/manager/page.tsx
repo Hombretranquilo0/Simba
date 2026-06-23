@@ -2,22 +2,37 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import Inventory from '@/components/manager/Inventory';
 import Orders from '@/components/manager/Orders';
 import Revenue from '@/components/manager/Revenue';
 import { LayoutDashboard, Package, ShoppingCart, DollarSign } from 'lucide-react';
 
 export default function ManagerDashboard() {
-  const { user, token, isAuthenticated } = useAuth();
+  const { user, token, isAuthenticated, isLoading, logout } = useAuth();
   const router = useRouter();
+  const params = useParams();
+  const locale = params.locale as string;
   const [activeTab, setActiveTab] = useState('inventory');
 
   useEffect(() => {
-    if (!isAuthenticated || user?.role !== 'manager') {
+    if (!isLoading && (!isAuthenticated || user?.role !== 'manager')) {
       router.push('/');
     }
-  }, [isAuthenticated, user, router]);
+  }, [isLoading, isAuthenticated, user, router]);
+
+  const handleUnauthorized = () => {
+    logout();
+    router.push(`/${locale}/login`);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-simba-orange"></div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated || user?.role !== 'manager') {
     return null;
@@ -62,9 +77,9 @@ export default function ManagerDashboard() {
 
         {/* Main Content */}
         <div className="flex-grow bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-6 min-h-[600px]">
-          {activeTab === 'inventory' && <Inventory token={token!} />}
-          {activeTab === 'orders' && <Orders token={token!} />}
-          {activeTab === 'revenue' && <Revenue token={token!} />}
+          {activeTab === 'inventory' && <Inventory token={token!} onUnauthorized={handleUnauthorized} />}
+          {activeTab === 'orders' && <Orders token={token!} onUnauthorized={handleUnauthorized} />}
+          {activeTab === 'revenue' && <Revenue token={token!} onUnauthorized={handleUnauthorized} />}
         </div>
       </div>
     </div>

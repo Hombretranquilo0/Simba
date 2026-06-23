@@ -5,21 +5,53 @@ node_modules/
 .next/
 out/
 
-# Env
+# Env files (set these in platform dashboards)
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+!.env.example
 
 # IDEs
 .vscode/
 .idea/
 
-# Backend
+# Backend build
 Backend/dist/
 Backend/node_modules/
 
-# Frontend
+# Frontend build
 Frontend/node_modules/
 Frontend/.next/
+Frontend/*.tsbuildinfo
+Frontend/next-env.d.ts
+
+# Local database
+Backend/prisma/dev.db
+Backend/prisma/dev.db-journal
+
+# Logs
+*.log
+backend-dev.err.log
+backend-dev.out.log
+frontend-dev.err.log
+frontend-dev.out.log
+Backend/tsc_out.txt
+Backend/tsc_err.txt
+Backend/start_out.txt
+Backend/start_err.txt
+Backend/build_out.txt
+Backend/build_err.txt
+Backend/backend_startup.log
+
+# Test/debug scripts
+Backend/test-db.ts
+Backend/test-db-pooler.ts
+Backend/test-db-ipv6.ts
+Backend/test-pg.js
+
+# Backups
+Backend/.env.backup
+
+# Kiro/agents
+.agents/
+.claude/
+skills-lock.json

@@ -8,6 +8,7 @@ export interface Product {
   image: string;
   description?: string;
   unit?: string;
+  discount?: number | null;
   translations?: {
     name?: Record<string, string>;
     category?: Record<string, string>;
