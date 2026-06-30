@@ -10,7 +10,7 @@ import { GoogleStrategy } from './google.strategy';
 @Module({
   imports: [
     UsersModule,
-    PassportModule,
+    PassportModule.register({ defaultStrategy: 'jwt', session: false }),
     JwtModule.registerAsync({
       useFactory: () => ({
         secret: process.env.JWT_SECRET || 'secretKey',

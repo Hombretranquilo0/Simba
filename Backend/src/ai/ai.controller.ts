@@ -10,7 +10,7 @@ export class AIController {
   async search(@Body() body: { query: string }) {
     const { query } = body;
     if (!query || query.trim() === '') {
-      return [];
+      return { products: [], message: '' };
     }
     return this.aiService.searchProducts(query.trim());
   }

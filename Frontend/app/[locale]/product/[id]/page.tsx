@@ -5,6 +5,7 @@ import { ArrowLeft, ShieldCheck, Truck, RefreshCw, Star, Info } from 'lucide-rea
 import AddToCartButton from '@/components/AddToCartButton';
 import ProductImageGallery from '@/components/ProductImageGallery';
 import ProductCard from '@/components/ProductCard';
+import ShareButtons from '@/components/ShareButtons';
 import { createTranslator, getDictionary, Locale, translateCategory } from '@/utils/i18n';
 import { TranslationProvider } from '@/context/TranslationContext';
 import * as motion from "framer-motion/client"
@@ -195,6 +196,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
                   <span className="text-xs font-bold text-gray-700 dark:text-gray-300 leading-tight">{t('common.easyReturns')}</span>
                 </div>
               </div>
+
+              {/* Social share buttons */}
+              <ShareButtons productName={translatedName} price={product.price} />
             </div>
           </motion.div>
         </div>

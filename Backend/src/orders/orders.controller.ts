@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Body, Param, Patch, UseGuards, Request } from '@nestjs/common';
-import { OrdersService } from './orders.service';
+import { OrdersService, FulfillmentData } from './orders.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -10,8 +10,29 @@ export class OrdersController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  create(@Request() req, @Body() body: { items: any[]; total: number }) {
-    return this.ordersService.createOrder(req.user.userId, body.items, body.total);
+  create(
+    @Request() req,
+    @Body()
+    body: {
+      items: { productId: number; quantity: number; price: number }[];
+      total: number;
+      fulfillmentType: 'delivery' | 'pickup';
+      phone?: string;
+      deliveryNotes?: string;
+      locationLink?: string;
+      pickupName?: string;
+      pickupTime?: string;
+    },
+  ) {
+    const fulfillment: FulfillmentData = {
+      fulfillmentType: body.fulfillmentType ?? 'delivery',
+      phone: body.phone,
+      deliveryNotes: body.deliveryNotes,
+      locationLink: body.locationLink,
+      pickupName: body.pickupName,
+      pickupTime: body.pickupTime,
+    };
+    return this.ordersService.createOrder(req.user.userId, body.items, body.total, fulfillment);
   }
 
   @Get('me')

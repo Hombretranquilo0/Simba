@@ -2,14 +2,10 @@
 
 import { getProducts } from '@/utils/products';
 import ProductList from '@/components/ProductList';
-import ProductCard from '@/components/ProductCard';
 import { useTranslation } from '@/context/TranslationContext';
 import { motion } from 'framer-motion';
-import Link from 'next/link';
-import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Product } from '@/types/product';
-import { Tag } from 'lucide-react';
 
 import { useSearch } from '@/context/SearchContext';
 import API_URL from '@/utils/api';
@@ -18,9 +14,7 @@ export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [discounted, setDiscounted] = useState<Product[]>([]);
   const { t } = useTranslation();
-  const params = useParams();
-  const locale = params.locale as string;
-  const { priceRange, inStockOnly, setPriceRange, minPriceLimit, maxPriceLimit } = useSearch();
+  const { setPriceRange, minPriceLimit, maxPriceLimit } = useSearch();
 
   useEffect(() => {
     getProducts().then(setProducts);
@@ -73,6 +67,12 @@ export default function Home() {
               <motion.button 
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
+                onClick={() => {
+                  const el = document.getElementById('deals');
+                  if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                }}
                 className="bg-simba-orange/30 backdrop-blur-md text-white border-2 border-white/20 font-black py-5 px-10 rounded-2xl transition-all text-lg"
               >
                 View Deals
@@ -98,35 +98,8 @@ export default function Home() {
         />
       </section>
 
-      {/* Discounted Products Section */}
-      {discounted.length > 0 && (() => {
-        const visible = discounted.filter(
-          p => p.price >= priceRange[0] && p.price <= priceRange[1] && (!inStockOnly || p.inStock)
-        );
-        if (visible.length === 0) return null;
-        return (
-          <section className="mb-16">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-xl">
-                <Tag size={20} className="text-orange-500" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-black tracking-tight text-gray-900 dark:text-white">🔥 On Sale</h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Limited-time discounts just for you</p>
-              </div>
-            </div>
-            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-orange-200 dark:scrollbar-thumb-orange-900">
-              {visible.map(product => (
-                <div key={product.id} className="flex-shrink-0 w-52">
-                  <ProductCard product={product} locale={locale} />
-                </div>
-              ))}
-            </div>
-          </section>
-        );
-      })()}
-
-      <ProductList initialProducts={products} />
+      {/* Discounted Products Section + Full Product List */}
+      <ProductList initialProducts={products} discountedProducts={discounted} />
     </motion.div>
   );
 }

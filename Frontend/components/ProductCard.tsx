@@ -10,6 +10,8 @@ import { useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useSearch } from '@/context/SearchContext';
 import { translateCategory } from '@/utils/i18n';
+import { useState } from 'react';
+import QuickViewModal from '@/components/QuickViewModal';
 
 interface ProductCardProps {
   product: Product;
@@ -22,7 +24,8 @@ const ProductCard = ({ product, locale: propLocale }: ProductCardProps) => {
   const { searchTerm } = useSearch();
   const params = useParams();
   const locale = propLocale || (params.locale as string);
-  
+  const [quickViewOpen, setQuickViewOpen] = useState(false);
+
   const translatedCategory = translateCategory(product.category, dictionary);
 
   // Fallback image if product image is missing or invalid
@@ -80,29 +83,40 @@ const ProductCard = ({ product, locale: propLocale }: ProductCardProps) => {
       </div>
 
       {/* Image Container */}
-      <Link 
-        href={`/${locale}/product/${product.id}`} 
-        className="relative aspect-square overflow-hidden bg-gray-50 dark:bg-gray-800 flex items-center justify-center"
-      >
-        <Image
-          src={imageUrl}
-          alt={product.name}
-          fill
-          className="object-contain p-6 group-hover:scale-110 transition-transform duration-700 ease-in-out"
-          sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
-        />
-        
-        {/* Overlay on hover */}
-        <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            whileHover={{ scale: 1, opacity: 1 }}
-            className="bg-white dark:bg-gray-900 p-3 rounded-full shadow-xl text-simba-orange dark:text-simba-gold"
+      <div className="relative aspect-square overflow-hidden bg-gray-50 dark:bg-gray-800 flex items-center justify-center">
+        {/* Clicking the image goes to the product page */}
+        <Link
+          href={`/${locale}/product/${product.id}`}
+          className="absolute inset-0"
+          tabIndex={-1}
+          aria-label={`View ${product.name}`}
+        >
+          <Image
+            src={imageUrl}
+            alt={product.name}
+            fill
+            className="object-contain p-6 group-hover:scale-110 transition-transform duration-700 ease-in-out"
+            sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
+          />
+        </Link>
+
+        {/* Quick View button — shown on hover, sits above the link */}
+        <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center pointer-events-none">
+          <motion.button
+            onClick={(e) => {
+              e.preventDefault();
+              setQuickViewOpen(true);
+            }}
+            aria-label={`Quick view ${product.name}`}
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.94 }}
+            className="pointer-events-auto bg-white dark:bg-gray-900 flex items-center gap-2 pl-3 pr-4 py-2.5 rounded-full shadow-xl text-simba-orange dark:text-simba-gold font-bold text-xs uppercase tracking-widest border border-white/80 dark:border-gray-700"
           >
-            <Eye size={24} />
-          </motion.div>
+            <Eye size={15} />
+            Quick View
+          </motion.button>
         </div>
-      </Link>
+      </div>
 
       {/* Content */}
       <div className="p-5 flex flex-col flex-grow">
@@ -171,6 +185,14 @@ const ProductCard = ({ product, locale: propLocale }: ProductCardProps) => {
           </Link>
         </div>
       </div>
+
+      {/* Quick View Modal — rendered inside the card so each card manages its own modal */}
+      <QuickViewModal
+        product={product}
+        isOpen={quickViewOpen}
+        onClose={() => setQuickViewOpen(false)}
+        locale={locale}
+      />
     </motion.div>
   );
 };

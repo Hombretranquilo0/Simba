@@ -8,9 +8,11 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     super({
       clientID: process.env.GOOGLE_CLIENT_ID || 'dummy',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'dummy',
-      callbackURL: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:3001/auth/google/callback',
+      callbackURL: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:3001/auth/callback',
       scope: ['email', 'profile'],
-    });
+      store: false,
+      state: false,
+    } as any);
   }
 
   async validate(
@@ -20,13 +22,11 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     done: VerifyCallback,
   ): Promise<any> {
     const { name, emails, id } = profile;
-    const user = {
+    done(null, {
       googleId: id,
       email: emails[0].value,
       firstName: name.givenName,
       lastName: name.familyName,
-      accessToken,
-    };
-    done(null, user);
+    });
   }
 }

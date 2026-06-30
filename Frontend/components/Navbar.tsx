@@ -22,17 +22,25 @@ const Navbar = ({ locale }: { locale: Locale }) => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isCatOpen, setIsCatOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobileCatOpen, setIsMobileCatOpen] = useState(false);
   const [categories, setCategories] = useState<string[]>([]);
   const catRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetch(`${API_URL}/products`)
-      .then(r => r.ok ? r.json() : [])
-      .then((products: any[]) => {
-        const cats = [...new Set(products.map((p: any) => p.category as string))].sort();
-        setCategories(cats);
-      })
-      .catch(() => {});
+    let retries = 0;
+    const load = () => {
+      fetch(`${API_URL}/products`)
+        .then(r => r.ok ? r.json() : Promise.reject(r.status))
+        .then((products: any[]) => {
+          const cats = [...new Set(products.map((p: any) => p.category as string))].sort();
+          setCategories(cats);
+        })
+        .catch(() => {
+          if (retries < 3) { retries++; setTimeout(load, 2000 * retries); }
+        });
+    };
+    load();
   }, []);
 
   // Close dropdown on outside click
@@ -103,19 +111,23 @@ const Navbar = ({ locale }: { locale: Locale }) => {
         <div className="hidden md:flex flex-grow max-w-xl relative group">
           <input
             type="text"
-            placeholder={t('common.search')}
-            className="w-full px-5 py-2.5 pl-12 bg-gray-100/50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-900 dark:text-gray-100 border-2 border-transparent focus:border-simba-orange/30 dark:focus:border-simba-gold/30 rounded-2xl focus:ring-0 outline-none transition-all duration-300"
+            placeholder='Try "cheap breakfast items" or "fruits under 3,000 RWF"'
+            className="w-full px-5 py-2.5 pl-12 pr-16 bg-gray-100/50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-900 dark:text-gray-100 border-2 border-transparent focus:border-simba-orange/30 dark:focus:border-simba-gold/30 rounded-2xl focus:ring-0 outline-none transition-all duration-300"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
           <Search className="absolute left-4 top-3 text-gray-400 group-focus-within:text-simba-orange transition-colors" size={20} />
-          {searchTerm && (
-            <button 
+          {searchTerm ? (
+            <button
               onClick={() => setSearchTerm('')}
               className="absolute right-4 top-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
             >
               <X size={18} />
             </button>
+          ) : (
+            <span className="absolute right-3 top-2.5 px-1.5 py-0.5 text-[10px] font-black tracking-widest uppercase bg-orange-100 dark:bg-simba-gold/20 text-orange-500 dark:text-simba-gold rounded-md pointer-events-none">
+              AI
+            </span>
           )}
         </div>
 
@@ -232,7 +244,11 @@ const Navbar = ({ locale }: { locale: Locale }) => {
             )}
           </div>
 
-          <button className="md:hidden p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 transition-colors">
+          <button
+            className="md:hidden p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 transition-colors"
+            aria-label="Open menu"
+            onClick={() => setIsMobileMenuOpen(true)}
+          >
             <Menu size={24} />
           </button>
         </div>
@@ -251,24 +267,208 @@ const Navbar = ({ locale }: { locale: Locale }) => {
               <input
                 type="text"
                 autoFocus
-                placeholder={t('common.search')}
-                className="w-full px-5 py-3 pl-12 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-none rounded-2xl focus:ring-2 focus:ring-simba-orange/50 outline-none"
+                placeholder='Try "cheap breakfast" or "fruits under 3,000 RWF"'
+                className="w-full px-5 py-3 pl-12 pr-16 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-none rounded-2xl focus:ring-2 focus:ring-simba-orange/50 outline-none"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
               <Search className="absolute left-4 top-3.5 text-gray-400" size={20} />
-              <button 
-                onClick={() => setIsSearchOpen(false)}
-                className="absolute right-4 top-3.5 text-gray-400"
-              >
-                <X size={20} />
-              </button>
+              {searchTerm ? (
+                <button onClick={() => setIsSearchOpen(false)} className="absolute right-4 top-3.5 text-gray-400">
+                  <X size={20} />
+                </button>
+              ) : (
+                <span className="absolute right-3 top-3 px-1.5 py-0.5 text-[10px] font-black tracking-widest uppercase bg-orange-100 dark:bg-simba-gold/20 text-orange-500 dark:text-simba-gold rounded-md pointer-events-none">
+                  AI
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-2 mt-3 py-2 border-t border-gray-100 dark:border-gray-800">
               <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t('navbar.categories')}</span>
               <LanguageSwitcher currentLocale={locale} />
             </div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Mobile Menu Drawer ────────────────────────────────────── */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              key="mobile-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm md:hidden"
+              onClick={() => setIsMobileMenuOpen(false)}
+            />
+
+            {/* Drawer panel */}
+            <motion.div
+              key="mobile-drawer"
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', stiffness: 320, damping: 30 }}
+              className="fixed top-0 right-0 bottom-0 z-[70] w-[300px] max-w-[90vw] bg-white dark:bg-gray-950 shadow-2xl flex flex-col md:hidden overflow-y-auto"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-gray-800">
+                <span className="text-lg font-black text-simba-orange tracking-tighter">
+                  SIMBA<span className="text-orange-500">SHOP</span>
+                </span>
+                <button
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 transition-colors"
+                  aria-label="Close menu"
+                >
+                  <X size={22} />
+                </button>
+              </div>
+
+              {/* Signed-in user chip */}
+              {isAuthenticated && user && (
+                <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-simba-gold/10 flex items-center justify-center text-simba-orange dark:text-simba-gold font-black text-lg flex-shrink-0">
+                    {user.name?.[0]?.toUpperCase() ?? 'U'}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-bold text-gray-900 dark:text-white text-sm leading-tight truncate">{user.name}</p>
+                    <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Nav links */}
+              <div className="flex-grow px-4 py-4 space-y-1">
+                <Link
+                  href={`/${locale}`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold text-gray-700 dark:text-gray-300 hover:text-simba-orange hover:bg-orange-50 dark:hover:bg-simba-gold/10 transition-colors"
+                >
+                  Home
+                </Link>
+
+                <Link
+                  href={`/${locale}/about`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold text-gray-700 dark:text-gray-300 hover:text-simba-orange hover:bg-orange-50 dark:hover:bg-simba-gold/10 transition-colors"
+                >
+                  About
+                </Link>
+
+                <Link
+                  href={`/${locale}/cart`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-bold text-gray-700 dark:text-gray-300 hover:text-simba-orange hover:bg-orange-50 dark:hover:bg-simba-gold/10 transition-colors"
+                >
+                  Cart
+                  {totalItems > 0 && (
+                    <span className="bg-orange-500 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full">
+                      {totalItems}
+                    </span>
+                  )}
+                </Link>
+
+                {isAuthenticated ? (
+                  <>
+                    <Link
+                      href={`/${locale}/orders`}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold text-gray-700 dark:text-gray-300 hover:text-simba-orange hover:bg-orange-50 dark:hover:bg-simba-gold/10 transition-colors"
+                    >
+                      <OrdersIcon size={16} />
+                      My Orders
+                    </Link>
+                    {user?.role === 'manager' && (
+                      <Link
+                        href={`/${locale}/manager`}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold text-simba-orange hover:bg-orange-50 dark:hover:bg-simba-gold/10 transition-colors"
+                      >
+                        <LayoutDashboard size={16} />
+                        Manager Dashboard
+                      </Link>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex flex-col gap-2 pt-2">
+                    <Link
+                      href={`/${locale}/login`}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-sm font-bold text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:border-simba-orange hover:text-simba-orange transition-colors"
+                    >
+                      <UserIcon size={16} />
+                      Login
+                    </Link>
+                    <Link
+                      href={`/${locale}/signup`}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-sm font-bold text-white bg-simba-orange hover:bg-orange-600 transition-colors shadow-md shadow-simba-orange/20"
+                    >
+                      Sign Up
+                    </Link>
+                  </div>
+                )}
+
+                {/* Categories accordion */}
+                <div className="pt-2 border-t border-gray-100 dark:border-gray-800 mt-2">
+                  <button
+                    onClick={() => setIsMobileCatOpen(v => !v)}
+                    className="w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-bold text-gray-700 dark:text-gray-300 hover:text-simba-orange hover:bg-orange-50 dark:hover:bg-simba-gold/10 transition-colors"
+                  >
+                    {t('navbar.categories')}
+                    <ChevronDown size={16} className={`transition-transform ${isMobileCatOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  <AnimatePresence initial={false}>
+                    {isMobileCatOpen && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden pl-4"
+                      >
+                        {categories.map(cat => (
+                          <Link
+                            key={cat}
+                            href={`/${locale}/category/${encodeURIComponent(cat)}`}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className="block px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-simba-orange dark:hover:text-simba-gold hover:bg-orange-50 dark:hover:bg-simba-gold/10 rounded-xl transition-colors"
+                          >
+                            {translateCategory(cat, dictionary)}
+                          </Link>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+
+              {/* Footer — language, theme, logout */}
+              <div className="px-6 py-5 border-t border-gray-100 dark:border-gray-800 space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black uppercase tracking-widest text-gray-400">Language</span>
+                  <LanguageSwitcher currentLocale={locale} />
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black uppercase tracking-widest text-gray-400">Theme</span>
+                  <ThemeToggle />
+                </div>
+                {isAuthenticated && (
+                  <button
+                    onClick={() => { logout(); setIsMobileMenuOpen(false); }}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-red-100 dark:border-red-900/30 transition-colors"
+                  >
+                    <LogOut size={16} />
+                    Logout
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </nav>

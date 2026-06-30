@@ -10,16 +10,17 @@ import { ProductGridSkeleton } from './ProductSkeleton';
 import { translateCategory } from '@/utils/i18n';
 import { useParams } from 'next/navigation';
 import PriceSlider from './PriceSlider';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Tag } from 'lucide-react';
 import Link from 'next/link';
 
 import API_URL from '@/utils/api';
 
 interface ProductListProps {
   initialProducts: Product[];
+  discountedProducts?: Product[];
 }
 
-const ProductList = ({ initialProducts }: ProductListProps) => {
+const ProductList = ({ initialProducts, discountedProducts = [] }: ProductListProps) => {
   const { 
     debouncedSearchTerm, 
     priceRange, 
@@ -37,12 +38,14 @@ const ProductList = ({ initialProducts }: ProductListProps) => {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [sortBy, setSortBy] = useState<'price-asc' | 'price-desc' | 'name-asc'>('name-asc');
   const [aiResults, setAiResults] = useState<Product[] | null>(null);
+  const [aiMessage, setAiMessage] = useState<string>('');
   const [aiSearching, setAiSearching] = useState(false);
 
   // AI search effect: when debouncedSearchTerm changes, call backend
   useEffect(() => {
     if (!debouncedSearchTerm.trim()) {
       setAiResults(null);
+      setAiMessage('');
       setAiSearching(false);
       return;
     }
@@ -61,13 +64,21 @@ const ProductList = ({ initialProducts }: ProductListProps) => {
         return res.json();
       })
       .then((data) => {
-        setAiResults(Array.isArray(data) ? data : []);
+        // Handle both { products, message } shape and legacy plain array
+        if (data && !Array.isArray(data) && Array.isArray(data.products)) {
+          setAiResults(data.products);
+          setAiMessage(data.message || '');
+        } else {
+          setAiResults(Array.isArray(data) ? data : []);
+          setAiMessage('');
+        }
         setAiSearching(false);
       })
       .catch((err) => {
         if (err.name !== 'AbortError') {
           console.error('AI search error, using client-side filter:', err);
           setAiResults(null);
+          setAiMessage('');
           setAiSearching(false);
         }
       });
@@ -153,6 +164,24 @@ const ProductList = ({ initialProducts }: ProductListProps) => {
     return results;
   }, [debouncedSearchTerm, initialProducts, dictionary, priceRange, inStockOnly, sortBy, aiResults]);
 
+  // Filter discounted strip using the same active search/AI/price/stock state
+  const filteredDiscounted = useMemo(() => {
+    if (discountedProducts.length === 0) return [];
+    let results = discountedProducts.filter(
+      p => p.price >= priceRange[0] && p.price <= priceRange[1] && (!inStockOnly || p.inStock)
+    );
+    if (aiResults !== null) {
+      const aiIds = new Set(aiResults.map(p => p.id));
+      results = results.filter(p => aiIds.has(p.id));
+    } else if (debouncedSearchTerm.trim()) {
+      const lower = debouncedSearchTerm.toLowerCase();
+      results = results.filter(
+        p => p.name.toLowerCase().includes(lower) || p.category.toLowerCase().includes(lower)
+      );
+    }
+    return results;
+  }, [discountedProducts, aiResults, debouncedSearchTerm, priceRange, inStockOnly]);
+
   const groupedProducts = useMemo(() => {
     return filteredProducts.reduce((acc, product: Product) => {
       if (!acc[product.category]) {
@@ -171,7 +200,31 @@ const ProductList = ({ initialProducts }: ProductListProps) => {
   }, [initialProducts]);
 
   if (isInitialLoading) {
-    return <ProductGridSkeleton />;
+    return (
+      <>
+        {discountedProducts.length > 0 && (
+          <section id="deals" className="mb-16 scroll-mt-24">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-xl">
+                <Tag size={20} className="text-orange-500" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-black tracking-tight text-gray-900 dark:text-white">🔥 On Sale</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Limited-time discounts just for you</p>
+              </div>
+            </div>
+            <div className="flex gap-4 overflow-x-auto pb-2">
+              {discountedProducts.map(product => (
+                <div key={product.id} className="flex-shrink-0 w-52">
+                  <ProductCard product={product} locale={locale} />
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+        <ProductGridSkeleton />
+      </>
+    );
   }
 
   const handleResetFilters = () => {
@@ -181,6 +234,28 @@ const ProductList = ({ initialProducts }: ProductListProps) => {
   };
 
   return (
+    <>
+      {/* On Sale strip — filtered by active search/AI/price/stock */}
+      {filteredDiscounted.length > 0 && (
+        <section id="deals" className="mb-16 scroll-mt-24">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-xl">
+              <Tag size={20} className="text-orange-500" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-black tracking-tight text-gray-900 dark:text-white">🔥 On Sale</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Limited-time discounts just for you</p>
+            </div>
+          </div>
+          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-orange-200 dark:scrollbar-thumb-orange-900">
+            {filteredDiscounted.map(product => (
+              <div key={product.id} className="flex-shrink-0 w-52">
+                <ProductCard product={product} locale={locale} />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     <div className="flex flex-col lg:flex-row gap-10 pb-20">
       {/* Sidebar Filters */}
       <aside className="lg:w-72 flex-shrink-0 space-y-8">
@@ -237,6 +312,75 @@ const ProductList = ({ initialProducts }: ProductListProps) => {
               Analyzing your query &ldquo;{debouncedSearchTerm}&rdquo; with AI...
             </p>
           </div>
+        ) : aiMessage ? (
+          <>
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-start gap-3 px-5 py-3.5 bg-orange-50 dark:bg-simba-gold/10 border border-orange-200 dark:border-simba-gold/20 rounded-2xl text-sm text-gray-700 dark:text-gray-300"
+            >
+              <span className="flex-shrink-0 mt-0.5 text-base">🤖</span>
+              <span>{aiMessage}</span>
+            </motion.div>
+            {filteredProducts.length === 0 ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex flex-col items-center justify-center py-24 px-4 bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800"
+              >
+                <div className="bg-gray-50 dark:bg-gray-800 p-8 rounded-full mb-6 text-gray-400">
+                  <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{t('common.noProducts')}</h3>
+                <p className="text-gray-500 dark:text-gray-400 mt-2 text-center max-w-md text-lg">
+                  {t('common.noProductsDesc', { searchTerm: debouncedSearchTerm })}
+                </p>
+                <button onClick={handleResetFilters} className="mt-8 text-simba-orange dark:text-simba-gold font-bold hover:underline">
+                  Clear all filters
+                </button>
+              </motion.div>
+            ) : (
+              categories.map((category, categoryIdx) => (
+                <motion.section
+                  key={category}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-100px' }}
+                  transition={{ duration: 0.5, delay: categoryIdx * 0.1 }}
+                  className="scroll-mt-24"
+                >
+                  <div className="flex items-center justify-between mb-8 border-b border-gray-100 dark:border-gray-800 pb-4">
+                    <div className="flex items-center gap-4">
+                      <div className="w-3 h-10 bg-simba-orange dark:bg-simba-gold rounded-full shadow-lg shadow-simba-orange/20" />
+                      <div>
+                        <h2 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">
+                          {translateCategory(category, dictionary)}
+                        </h2>
+                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                          {groupedProducts[category].length} {t('common.items')} available
+                        </p>
+                      </div>
+                    </div>
+                    <Link href={`/${locale}/category/${encodeURIComponent(category)}`} className="text-simba-orange dark:text-simba-gold font-bold text-sm hover:underline flex items-center gap-1">
+                      View All
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </Link>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-8">
+                    <AnimatePresence mode="popLayout">
+                      {groupedProducts[category].slice(0, 15).map((product) => (
+                        <ProductCard key={product.id} product={product} locale={locale} />
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                </motion.section>
+              ))
+            )}
+          </>
         ) : filteredProducts.length === 0 ? (
           <motion.div 
             initial={{ opacity: 0, scale: 0.9 }}
@@ -305,6 +449,7 @@ const ProductList = ({ initialProducts }: ProductListProps) => {
         )}
       </div>
     </div>
+    </>
   );
 };
 

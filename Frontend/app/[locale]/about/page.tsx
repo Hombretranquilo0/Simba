@@ -2,11 +2,22 @@
 
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { ArrowLeft, Mail, Phone, MapPin, Clock } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { ArrowLeft, ChevronDown } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useState } from 'react';
+
+const FAQS = [
+  { q: 'Do you deliver on public holidays?', a: 'Yes! We deliver 7 days a week including public holidays, from 8:00 AM to 6:00 PM. Orders placed after 4:00 PM on a holiday will be delivered the following day.' },
+  { q: 'Can I return fresh vegetables or perishable items?', a: 'Yes, within 24 hours of delivery. If a fresh product does not meet your quality expectations, contact us immediately with a photo and we will arrange a replacement or refund.' },
+  { q: 'What is the minimum order amount?', a: 'Our minimum order is 2,500 RWF to ensure deliveries remain logistically viable and reach you in the best condition.' },
+  { q: 'Which payment methods do you accept?', a: 'We currently offer Cash on Delivery (CoD) and simulated card payment at checkout. Mobile money integration (MTN MoMo & Airtel Money) is coming soon.' },
+  { q: 'How long does delivery take?', a: 'Standard delivery within Kigali takes 1–3 hours. Orders outside Kigali may take up to 24 hours. You will receive a confirmation call once your order is dispatched.' },
+  { q: 'Can I change or cancel my order after placing it?', a: 'You can cancel or modify your order within 15 minutes of placing it by calling our support line. After that, the order enters fulfilment and cannot be changed.' },
+];
 
 export default function AboutPage() {
   const { locale } = useParams() as { locale: string };
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -74,64 +85,42 @@ export default function AboutPage() {
         </div>
       </motion.section>
 
-      {/* Contact */}
+      {/* FAQ */}
       <motion.section
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 p-8"
+        className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 p-8 mt-8"
       >
-        <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-6 tracking-tight">Contact Us</h2>
-        <div className="grid sm:grid-cols-2 gap-4">
-          {[
-            {
-              icon: <Mail size={20} />,
-              label: 'Customer Support',
-              value: 'info@simbasupermarket.rw',
-              href: 'mailto:info@simbasupermarket.rw',
-            },
-            {
-              icon: <Phone size={20} />,
-              label: 'Main Line',
-              value: '+250 788 300 000',
-              href: 'tel:+250788300000',
-            },
-            {
-              icon: <Phone size={20} />,
-              label: 'Sales & Orders',
-              value: '+250 722 300 000',
-              href: 'tel:+250722300000',
-            },
-            {
-              icon: <MapPin size={20} />,
-              label: 'Location',
-              value: 'Kigali, Rwanda',
-              href: 'https://maps.google.com/?q=Kigali,Rwanda',
-            },
-            {
-              icon: <Clock size={20} />,
-              label: 'Opening Hours',
-              value: 'Mon – Sun: 7:00 AM – 9:00 PM',
-              href: null,
-            },
-          ].map(({ icon, label, value, href }) => (
-            <div
-              key={label}
-              className="flex items-start gap-4 p-5 bg-gray-50 dark:bg-gray-800/50 rounded-2xl"
-            >
-              <div className="p-2.5 bg-orange-100 dark:bg-simba-gold/10 rounded-xl text-simba-orange dark:text-simba-gold flex-shrink-0">
-                {icon}
-              </div>
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">{label}</p>
-                {href ? (
-                  <a href={href} className="text-sm font-bold text-gray-900 dark:text-white hover:text-simba-orange dark:hover:text-simba-gold transition-colors">
-                    {value}
-                  </a>
-                ) : (
-                  <p className="text-sm font-bold text-gray-900 dark:text-white">{value}</p>
+        <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-6 tracking-tight">Frequently Asked Questions</h2>
+        <div className="space-y-3">
+          {FAQS.map((faq, i) => (
+            <div key={i} className="border border-gray-100 dark:border-gray-800 rounded-2xl overflow-hidden">
+              <button
+                onClick={() => setOpenIndex(openIndex === i ? null : i)}
+                className="w-full flex items-center justify-between px-6 py-4 text-left font-black text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+              >
+                <span className="text-sm pr-4">{faq.q}</span>
+                <ChevronDown
+                  size={18}
+                  className={`flex-shrink-0 text-simba-orange transition-transform duration-200 ${openIndex === i ? 'rotate-180' : ''}`}
+                />
+              </button>
+              <AnimatePresence initial={false}>
+                {openIndex === i && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <p className="px-6 pb-5 text-sm text-gray-600 dark:text-gray-300 leading-relaxed border-t border-gray-100 dark:border-gray-800 pt-4">
+                      {faq.a}
+                    </p>
+                  </motion.div>
                 )}
-              </div>
+              </AnimatePresence>
             </div>
           ))}
         </div>

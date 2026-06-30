@@ -1,16 +1,38 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
+export interface FulfillmentData {
+  fulfillmentType: 'delivery' | 'pickup';
+  phone?: string;
+  // delivery
+  deliveryNotes?: string;
+  locationLink?: string;
+  // pickup
+  pickupName?: string;
+  pickupTime?: string;
+}
+
 @Injectable()
 export class OrdersService {
   constructor(private prisma: PrismaService) {}
 
-  async createOrder(userId: number, items: { productId: number; quantity: number; price: number }[], total: number) {
+  async createOrder(
+    userId: number,
+    items: { productId: number; quantity: number; price: number }[],
+    total: number,
+    fulfillment: FulfillmentData,
+  ) {
     return this.prisma.order.create({
       data: {
         userId,
         total,
         status: 'pending',
+        fulfillmentType: fulfillment.fulfillmentType,
+        phone: fulfillment.phone ?? null,
+        deliveryNotes: fulfillment.deliveryNotes ?? null,
+        locationLink: fulfillment.locationLink ?? null,
+        pickupName: fulfillment.pickupName ?? null,
+        pickupTime: fulfillment.pickupTime ?? null,
         items: {
           create: items.map((item) => ({
             productId: item.productId,

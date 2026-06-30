@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Package, User, Mail, Calendar, CreditCard, Clock, CheckCircle2, AlertCircle, Timer, Hash } from 'lucide-react';
+import { Package, User, Mail, Calendar, CreditCard, Clock, CheckCircle2, AlertCircle, Timer, Hash, Truck, ShoppingBag, Phone, MapPin, ExternalLink } from 'lucide-react';
 import API_URL from '@/utils/api';
 
 export default function Orders({ token, onUnauthorized }: { token: string; onUnauthorized?: () => void }) {
@@ -141,6 +141,52 @@ export default function Orders({ token, onUnauthorized }: { token: string; onUna
                             {order?.createdAt ? new Date(order.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'}
                           </p>
                         </div>
+                      </div>
+                    </div>
+
+                    {/* Fulfillment details */}
+                    <div className={`rounded-2xl p-4 border ${order.fulfillmentType === 'pickup' ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900' : 'bg-orange-50 dark:bg-orange-900/10 border-orange-100 dark:border-orange-900'}`}>
+                      <div className="flex items-center gap-2 mb-3">
+                        {order.fulfillmentType === 'pickup'
+                          ? <ShoppingBag size={14} className="text-blue-500" />
+                          : <Truck size={14} className="text-orange-500" />}
+                        <span className={`text-[10px] font-black uppercase tracking-widest ${order.fulfillmentType === 'pickup' ? 'text-blue-600' : 'text-orange-600'}`}>
+                          {order.fulfillmentType === 'pickup' ? 'Pickup' : 'Delivery'}
+                        </span>
+                      </div>
+                      <div className="space-y-1.5 text-xs font-medium text-gray-600 dark:text-gray-400">
+                        {order.phone && (
+                          <div className="flex items-center gap-2">
+                            <Phone size={12} className="flex-shrink-0 text-gray-400" />
+                            <span>{order.phone}</span>
+                          </div>
+                        )}
+                        {order.fulfillmentType === 'delivery' && order.deliveryNotes && (
+                          <div className="flex items-start gap-2">
+                            <MapPin size={12} className="flex-shrink-0 text-gray-400 mt-0.5" />
+                            <span>{order.deliveryNotes}</span>
+                          </div>
+                        )}
+                        {order.fulfillmentType === 'delivery' && order.locationLink && (
+                          <div className="flex items-center gap-2">
+                            <ExternalLink size={12} className="flex-shrink-0 text-gray-400" />
+                            <a href={order.locationLink} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline truncate max-w-[220px]">
+                              View on map
+                            </a>
+                          </div>
+                        )}
+                        {order.fulfillmentType === 'pickup' && order.pickupName && (
+                          <div className="flex items-center gap-2">
+                            <User size={12} className="flex-shrink-0 text-gray-400" />
+                            <span>{order.pickupName}</span>
+                          </div>
+                        )}
+                        {order.fulfillmentType === 'pickup' && order.pickupTime && (
+                          <div className="flex items-center gap-2">
+                            <Clock size={12} className="flex-shrink-0 text-gray-400" />
+                            <span>{order.pickupTime}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
 

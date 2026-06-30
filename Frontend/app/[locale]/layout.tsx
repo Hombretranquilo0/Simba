@@ -57,6 +57,7 @@ export async function generateStaticParams() {
 }
 
 import { AuthProvider } from "@/context/AuthContext";
+import Footer from "@/components/Footer";
 
 export default async function RootLayout({
   children,
@@ -105,6 +106,7 @@ export default async function RootLayout({
                   <main>
                     {children}
                   </main>
+                  <Footer />
                 </SearchProvider>
               </CartProvider>
             </TranslationProvider>

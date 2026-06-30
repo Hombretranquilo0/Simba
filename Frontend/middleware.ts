@@ -1,7 +1,7 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { locales, defaultLocale } from './utils/i18n';
 
-export function proxy(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Check if the pathname already has a locale
@@ -9,7 +9,7 @@ export function proxy(request: NextRequest) {
     (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
   );
 
-  if (pathnameHasLocale) return;
+  if (pathnameHasLocale) return NextResponse.next();
 
   // Redirect to the default locale
   const locale = defaultLocale;
