@@ -2,6 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import OpenAI from 'openai';
 
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 interface ParsedFilters {
   keywords: string[];
   minPrice?: number;
@@ -47,7 +52,7 @@ export class AIService {
     }
   }
 
-  async searchProducts(query: string): Promise<{ products: any[]; message: string }> {
+  async searchProducts(query: string, branchId?: string): Promise<{ products: any[]; message: string }> {
     let filters: ParsedFilters;
     let message = '';
 
@@ -66,9 +71,21 @@ export class AIService {
       filters = this.parseQueryRegex(query);
     }
 
-    const products = await this.runQuery(filters, query);
+    let products = await this.runQuery(filters, query);
 
-    // If LLM gave no message, build a simple one
+    // Merge branch-specific inventory if branchId provided
+    if (branchId && products.length > 0) {
+      const ids = products.map((p) => p.id);
+      const inventory = await this.prisma.branchInventory.findMany({
+        where: { branchId, productId: { in: ids } },
+      });
+      const invMap = new Map(inventory.map((r) => [r.productId, r]));
+      products = products.map((p) => {
+        const row = invMap.get(p.id);
+        return row ? { ...p, stockQuantity: row.stockQuantity, inStock: row.inStock } : p;
+      });
+    }
+
     if (!message) {
       message = this.buildFallbackMessage(query, filters, products.length);
     }
@@ -107,7 +124,7 @@ Currency: strip "RWF","FRW","francs","frw" suffixes and parse as a number.`;
 
 
     const completion = await this.groq!.chat.completions.create({
-      model: 'meta-llama/llama-3.3-70b-instruct',
+      model: 'llama-3.3-70b-versatile',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: query },
@@ -288,5 +305,56 @@ Currency: strip "RWF","FRW","francs","frw" suffixes and parse as a number.`;
 
   private parseNum(s: string): number {
     return parseFloat(s.replace(/,/g, ''));
+  }
+
+  // ── Conversational Chat ───────────────────────────────────────
+
+  async chat(history: ChatMessage[]): Promise<string> {
+    const systemPrompt = `You are Simba Assistant, the friendly and knowledgeable virtual helper for Simba Rwanda Supermarket — Rwanda's trusted supermarket since 2007.
+
+About Simba:
+- Founded in 2007, headquartered in Kigali, Rwanda.
+- Carries 10,000+ products: fresh produce, food & beverages, household essentials, cosmetics, electronics, baby products, pet supplies, sports & wellness, office supplies, and more.
+- Delivers across Kigali (1–3 hours) and beyond (up to 24 hours).
+- Opening hours: Monday – Sunday, 7:00 AM – 9:00 PM.
+- Contact: info@simbasupermarket.rw | +250 788 300 000 | +250 722 300 000
+- Website: simba-shop.rw
+
+Policies:
+- Minimum order: 2,500 RWF.
+- Delivery is currently FREE on all orders (limited time).
+- Payment: Cash on Delivery and simulated card payment. MTN MoMo & Airtel Money coming soon.
+- Returns: within 24 hours for fresh/perishable items (with photo proof). 
+- Order changes or cancellations: allowed within 15 minutes of placing the order by calling support.
+- Delivers on public holidays (8:00 AM – 6:00 PM). Orders after 4:00 PM on holidays delivered next day.
+
+Your role:
+- Answer questions about Simba's services, products, delivery, returns, payments, and account matters.
+- Be warm, concise, and helpful. Use short paragraphs.
+- If a user wants to search for specific products, tell them to use the search bar at the top of the page which has AI-powered product search.
+- Never make up information. If you don't know something, say so and offer the support contact.
+- Do not answer questions unrelated to Simba or general shopping assistance.
+- Respond in the same language the user writes in (English, French, or Kinyarwanda).`;
+
+    if (!this.groq) {
+      return "I'm sorry, the AI assistant is temporarily unavailable. Please contact us at info@simbasupermarket.rw or call +250 788 300 000 for help.";
+    }
+
+    try {
+      const completion = await this.groq.chat.completions.create({
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          ...history.map(m => ({ role: m.role, content: m.content })),
+        ],
+        temperature: 0.6,
+        max_tokens: 512,
+      });
+
+      return completion.choices[0]?.message?.content?.trim() ?? "I couldn't generate a response. Please try again.";
+    } catch (err) {
+      console.error('Chat AI error:', (err as Error).message);
+      return "I'm having trouble responding right now. Please try again shortly or contact our support team.";
+    }
   }
 }

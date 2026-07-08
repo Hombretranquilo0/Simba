@@ -2,9 +2,21 @@
 
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { ArrowLeft, ChevronDown } from 'lucide-react';
+import { ArrowLeft, ChevronDown, MapPin, Clock, Phone, ChevronRight, Store } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
+import branches, { Branch } from '@/data/branches';
+
+// Leaflet is browser-only — load dynamically
+const BranchesMap = dynamic(() => import('@/components/BranchesMap'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-[400px] rounded-2xl bg-gray-100 dark:bg-gray-800 animate-pulse flex items-center justify-center">
+      <span className="text-gray-400 text-sm font-medium">Loading map…</span>
+    </div>
+  ),
+});
 
 const FAQS = [
   { q: 'Do you deliver on public holidays?', a: 'Yes! We deliver 7 days a week including public holidays, from 8:00 AM to 6:00 PM. Orders placed after 4:00 PM on a holiday will be delivered the following day.' },
@@ -18,6 +30,12 @@ const FAQS = [
 export default function AboutPage() {
   const { locale } = useParams() as { locale: string };
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
+
+  const handleSelectBranch = (branch: Branch) => {
+    setSelectedBranch(branch);
+    document.getElementById('about-branches-map')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -46,7 +64,7 @@ export default function AboutPage() {
         <div className="absolute -right-4 -top-8 w-40 h-40 bg-white/5 rounded-full" />
       </motion.section>
 
-      {/* History */}
+      {/* Our Story */}
       <motion.section
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -85,12 +103,134 @@ export default function AboutPage() {
         </div>
       </motion.section>
 
+      {/* ── Our Branches ──────────────────────────────────────────── */}
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
+        className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 p-8 mb-8"
+      >
+        {/* Section header */}
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-xl flex-shrink-0">
+            <Store size={20} className="text-simba-orange" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Our Branches</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Find your nearest Simba across Kigali. Click a branch to see it on the map.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Branch list */}
+          <aside className="lg:w-64 flex-shrink-0 space-y-2 max-h-[480px] overflow-y-auto pr-1">
+            {branches.map((branch, idx) => {
+              const isSelected = selectedBranch?.id === branch.id;
+              return (
+                <motion.button
+                  key={branch.id}
+                  initial={{ opacity: 0, x: -16 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: idx * 0.04 }}
+                  onClick={() => handleSelectBranch(branch)}
+                  className={`w-full text-left p-3.5 rounded-2xl border-2 transition-all duration-200 group ${
+                    isSelected
+                      ? 'border-simba-orange bg-orange-50 dark:bg-orange-900/20 shadow-md shadow-simba-orange/10'
+                      : 'border-gray-100 dark:border-gray-800 hover:border-simba-orange/40 hover:shadow-sm'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-grow min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isSelected ? 'bg-simba-orange' : 'bg-gray-300 dark:bg-gray-600'}`} />
+                        <span className={`font-black text-sm truncate ${isSelected ? 'text-simba-orange' : 'text-gray-900 dark:text-white'}`}>
+                          {branch.shortName}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 pl-3.5 leading-relaxed line-clamp-1">
+                        {branch.address}
+                      </p>
+                      <AnimatePresence initial={false}>
+                        {isSelected && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="mt-1.5 pl-3.5 space-y-1 overflow-hidden"
+                          >
+                            {branch.phone && (
+                              <p className="text-xs text-gray-600 dark:text-gray-300 flex items-center gap-1.5">
+                                <Phone size={10} className="text-simba-orange flex-shrink-0" />
+                                {branch.phone}
+                              </p>
+                            )}
+                            <p className="text-xs text-gray-600 dark:text-gray-300 flex items-center gap-1.5">
+                              <Clock size={10} className="text-simba-orange flex-shrink-0" />
+                              {branch.hours}
+                            </p>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                    <ChevronRight
+                      size={14}
+                      className={`flex-shrink-0 mt-0.5 transition-transform ${isSelected ? 'rotate-90 text-simba-orange' : 'text-gray-300 dark:text-gray-600'}`}
+                    />
+                  </div>
+                </motion.button>
+              );
+            })}
+          </aside>
+
+          {/* Map */}
+          <div className="flex-grow" id="about-branches-map">
+            <BranchesMap
+              selectedBranchId={selectedBranch?.id ?? null}
+              onBranchSelect={handleSelectBranch}
+              className="h-[400px] lg:h-[480px] border border-gray-100 dark:border-gray-800 shadow-lg"
+            />
+
+            {/* Selected branch info card */}
+            <AnimatePresence>
+              {selectedBranch && (
+                <motion.div
+                  key={selectedBranch.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 8 }}
+                  className="mt-3 p-4 bg-orange-50 dark:bg-orange-900/10 rounded-2xl border border-simba-orange/20"
+                >
+                  <div className="flex items-start gap-3">
+                    <MapPin size={16} className="text-simba-orange flex-shrink-0 mt-0.5" />
+                    <div className="flex-grow min-w-0">
+                      <p className="font-black text-gray-900 dark:text-white text-sm mb-0.5">{selectedBranch.name}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{selectedBranch.address}</p>
+                    </div>
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${selectedBranch.lat},${selectedBranch.lng}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-shrink-0 flex items-center gap-1.5 text-xs font-black text-white bg-simba-orange hover:bg-orange-600 px-3 py-2 rounded-xl transition-colors"
+                    >
+                      <MapPin size={12} />
+                      Directions
+                    </a>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+      </motion.section>
+
       {/* FAQ */}
       <motion.section
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 p-8 mt-8"
+        className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 p-8"
       >
         <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-6 tracking-tight">Frequently Asked Questions</h2>
         <div className="space-y-3">

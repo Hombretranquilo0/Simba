@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { usePathname } from 'next/navigation';
 
 interface SearchContextType {
   searchTerm: string;
@@ -25,6 +26,13 @@ export const SearchProvider = ({ children }: { children: ReactNode }) => {
   const [minPriceLimit, setMinPriceLimit] = useState(0);
   const [maxPriceLimit, setMaxPriceLimit] = useState(1000000);
   const [inStockOnly, setInStockOnly] = useState(false);
+  const pathname = usePathname();
+
+  // Clear search term whenever the user navigates to a different page
+  useEffect(() => {
+    setSearchTerm('');
+    setDebouncedSearchTerm('');
+  }, [pathname]);
 
   useEffect(() => {
     const handler = setTimeout(() => {

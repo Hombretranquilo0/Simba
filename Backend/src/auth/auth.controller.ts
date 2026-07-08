@@ -20,7 +20,7 @@ export class AuthController {
 
   @Post('signup')
   async signUp(@Body() body: any) {
-    return this.authService.signUp(body.email, body.password, body.name);
+    return this.authService.signUp(body.email, body.password, body.name, body.role, body.managedBranchId);
   }
 
   @Get('google')

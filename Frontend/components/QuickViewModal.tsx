@@ -10,6 +10,7 @@ import { Product } from '@/types/product';
 import AddToCartButton from '@/components/AddToCartButton';
 import { useTranslation } from '@/context/TranslationContext';
 import { translateCategory } from '@/utils/i18n';
+import { useCurrency } from '@/context/CurrencyContext';
 
 interface QuickViewModalProps {
   product: Product | null;
@@ -25,6 +26,7 @@ export default function QuickViewModal({
   locale,
 }: QuickViewModalProps) {
   const { t, dictionary } = useTranslation();
+  const { format } = useCurrency();
   const closeBtnRef = useRef<HTMLButtonElement>(null);
   // Track whether we're mounted on the client (needed for createPortal)
   const [mounted, setMounted] = useState(false);
@@ -160,19 +162,17 @@ export default function QuickViewModal({
                       {discountedPrice ? (
                         <div className="flex items-baseline gap-3 flex-wrap">
                           <span className="text-3xl font-black text-orange-500 tracking-tighter">
-                            {discountedPrice.toLocaleString()}
+                            {format(discountedPrice)}
                           </span>
-                          <span className="text-base font-bold text-orange-400 uppercase">RWF</span>
                           <span className="text-base line-through text-gray-400">
-                            {product.price.toLocaleString()} RWF
+                            {format(product.price)}
                           </span>
                         </div>
                       ) : (
                         <div className="flex items-baseline gap-2">
                           <span className="text-3xl font-black text-gray-900 dark:text-white tracking-tighter">
-                            {product.price.toLocaleString()}
+                            {format(product.price)}
                           </span>
-                          <span className="text-base font-bold text-gray-400 uppercase">RWF</span>
                         </div>
                       )}
                       {product.unit && (

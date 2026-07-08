@@ -8,6 +8,9 @@ import { UsersModule } from './users/users.module';
 import { ManagerModule } from './manager/manager.module';
 import { OrdersModule } from './orders/orders.module';
 import { AIModule } from './ai/ai.module';
+import { SavedItemsModule } from './saved-items/saved-items.module';
+import { SuperAdminModule } from './super-admin/super-admin.module';
+import { CurrencyModule } from './currency/currency.module';
 
 @Module({
   imports: [
@@ -18,6 +21,9 @@ import { AIModule } from './ai/ai.module';
     ManagerModule,
     OrdersModule,
     AIModule,
+    SavedItemsModule,
+    SuperAdminModule,
+    CurrencyModule,
   ],
   controllers: [AppController],
   providers: [AppService],

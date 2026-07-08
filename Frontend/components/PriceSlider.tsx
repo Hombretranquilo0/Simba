@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useSearch } from '@/context/SearchContext';
 import { useTranslation } from '@/context/TranslationContext';
+import { useCurrency } from '@/context/CurrencyContext';
 
 interface PriceSliderProps {
   min: number;
@@ -12,6 +13,7 @@ interface PriceSliderProps {
 const PriceSlider = ({ min, max }: PriceSliderProps) => {
   const { priceRange, setPriceRange } = useSearch();
   const { t } = useTranslation();
+  const { format } = useCurrency();
   
   const [minVal, setMinVal] = useState(priceRange[0]);
   const [maxVal, setMaxVal] = useState(priceRange[1]);
@@ -70,7 +72,7 @@ const PriceSlider = ({ min, max }: PriceSliderProps) => {
         </h3>
         <div className="flex items-center gap-2">
            <span className="text-xs font-bold text-simba-orange dark:text-simba-gold bg-orange-50 dark:bg-simba-gold/15 px-2 py-1 rounded-lg">
-             {minVal.toLocaleString()} - {maxVal.toLocaleString()} RWF
+             {format(minVal)} – {format(maxVal)}
            </span>
         </div>
       </div>

@@ -6,7 +6,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Inventory from '@/components/manager/Inventory';
 import Orders from '@/components/manager/Orders';
 import Revenue from '@/components/manager/Revenue';
-import { LayoutDashboard, Package, ShoppingCart, DollarSign } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, DollarSign, Lock } from 'lucide-react';
 
 export default function ManagerDashboard() {
   const { user, token, isAuthenticated, isLoading, logout } = useAuth();
@@ -16,8 +16,12 @@ export default function ManagerDashboard() {
   const [activeTab, setActiveTab] = useState('inventory');
 
   useEffect(() => {
-    if (!isLoading && (!isAuthenticated || user?.role !== 'manager')) {
-      router.push('/');
+    if (!isLoading && (!isAuthenticated || (user?.role !== 'manager' && user?.role !== 'super_admin'))) {
+      router.push(`/${locale}`);
+    }
+    // super_admin has their own dedicated dashboard
+    if (!isLoading && user?.role === 'super_admin') {
+      router.push(`/${locale}/super-admin`);
     }
   }, [isLoading, isAuthenticated, user, router]);
 
@@ -38,6 +42,8 @@ export default function ManagerDashboard() {
     return null;
   }
 
+  const isRestricted = !!user?.managedBranchId;
+
   const tabs = [
     { id: 'inventory', label: 'Inventory', icon: Package },
     { id: 'orders', label: 'Orders', icon: ShoppingCart },
@@ -47,10 +53,18 @@ export default function ManagerDashboard() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <LayoutDashboard className="text-simba-orange" />
-          Manager Dashboard
-        </h1>
+        <div>
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            <LayoutDashboard className="text-simba-orange" />
+            Manager Dashboard
+          </h1>
+          {isRestricted && (
+            <div className="flex items-center gap-2 mt-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-wider w-fit">
+              <Lock size={12} />
+              <span>Restricted to Kisementi Branch</span>
+            </div>
+          )}
+        </div>
         <div className="text-sm text-gray-500 bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-full">
           Welcome back, <span className="font-bold text-gray-900 dark:text-white">{user.name}</span>
         </div>

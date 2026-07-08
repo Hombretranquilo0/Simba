@@ -6,7 +6,8 @@ interface User {
   id: number;
   email: string;
   name?: string;
-  role: string;
+  role: 'user' | 'manager' | 'super_admin';
+  managedBranchId?: string;
 }
 
 interface AuthContextType {

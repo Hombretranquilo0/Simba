@@ -6,6 +6,7 @@ import AddToCartButton from '@/components/AddToCartButton';
 import ProductImageGallery from '@/components/ProductImageGallery';
 import ProductCard from '@/components/ProductCard';
 import ShareButtons from '@/components/ShareButtons';
+import ProductPrice from '@/components/ProductPrice';
 import { createTranslator, getDictionary, Locale, translateCategory } from '@/utils/i18n';
 import { TranslationProvider } from '@/context/TranslationContext';
 import * as motion from "framer-motion/client"
@@ -117,17 +118,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             </div>
 
             <div className="mb-10 p-6 bg-gray-50 dark:bg-gray-900/50 rounded-3xl border border-gray-100 dark:border-gray-800">
-              <div className="flex items-baseline gap-3 mb-2">
-                <span className="text-5xl font-black text-simba-orange dark:text-simba-gold tracking-tighter">
-                  {product.price.toLocaleString()}
-                </span>
-                <span className="text-2xl font-bold text-gray-400 uppercase tracking-tighter">RWF</span>
-                {product.unit && (
-                  <span className="ml-3 text-sm font-bold text-gray-400 uppercase tracking-widest">
-                    / {t('common.per')} {product.unit}
-                  </span>
-                )}
-              </div>
+              <ProductPrice price={product.price} unit={product.unit} per={t('common.per')} />
               <div className="flex items-center gap-2">
                 {product.inStock ? (
                   <div className="flex items-center gap-2 px-3 py-1 bg-orange-100 dark:bg-simba-gold/15 rounded-full">
@@ -169,7 +160,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
               </div>
               
               {/* Sticky Mobile Button Placeholder (Logic for sticky would be in AddToCartButton or a wrapper) */}
-              <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl border-t border-gray-100 dark:border-gray-800 sm:hidden z-50">
+              <div className="fixed bottom-0 left-0 right-0 p-4 pr-20 bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl border-t border-gray-100 dark:border-gray-800 sm:hidden z-50">
                  <AddToCartButton product={product} />
               </div>
 

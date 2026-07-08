@@ -16,6 +16,7 @@ export class OrdersController {
     body: {
       items: { productId: number; quantity: number; price: number }[];
       total: number;
+      branchId?: string;
       fulfillmentType: 'delivery' | 'pickup';
       phone?: string;
       deliveryNotes?: string;
@@ -32,7 +33,13 @@ export class OrdersController {
       pickupName: body.pickupName,
       pickupTime: body.pickupTime,
     };
-    return this.ordersService.createOrder(req.user.userId, body.items, body.total, fulfillment);
+    return this.ordersService.createOrder(
+      req.user.userId,
+      body.items,
+      body.total,
+      fulfillment,
+      body.branchId,
+    );
   }
 
   @Get('me')
@@ -43,7 +50,7 @@ export class OrdersController {
 
   @Patch(':id/status')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('manager')
+  @Roles('manager', 'super_admin')
   updateStatus(@Param('id') id: string, @Body('status') status: string) {
     return this.ordersService.updateOrderStatus(+id, status);
   }

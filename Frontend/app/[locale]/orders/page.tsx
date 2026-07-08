@@ -3,11 +3,12 @@
 import { useAuth } from '@/context/AuthContext';
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Package, Clock, CheckCircle2, AlertCircle, ShoppingBag, ArrowLeft, RefreshCcw } from 'lucide-react';
+import { Package, Clock, CheckCircle2, AlertCircle, ShoppingBag, ArrowLeft, RefreshCcw, Truck, Phone, MapPin, ExternalLink, User as UserIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useTranslation } from '@/context/TranslationContext';
 import API_URL from '@/utils/api';
+import { useCurrency } from '@/context/CurrencyContext';
 
 export default function OrdersPage() {
   const { token, isAuthenticated } = useAuth();
@@ -16,6 +17,7 @@ export default function OrdersPage() {
   const { t } = useTranslation();
   const params = useParams();
   const locale = params.locale as string;
+  const { format } = useCurrency();
 
   const fetchOrders = async () => {
     if (!token) return;
@@ -112,7 +114,7 @@ export default function OrdersPage() {
                       {order.status === 'cancelled' && <AlertCircle size={12} />}
                       {order.status}
                     </span>
-                    <p className="text-2xl font-black text-simba-orange">{order.total.toLocaleString()} <span className="text-sm font-medium opacity-60">RWF</span></p>
+                    <p className="text-2xl font-black text-simba-orange">{format(order.total)}</p>
                   </div>
                 </div>
 
@@ -130,9 +132,55 @@ export default function OrdersPage() {
                             <p className="text-xs text-gray-400">Qty: {item.quantity}</p>
                           </div>
                         </div>
-                        <p className="font-black text-gray-700 dark:text-gray-300">{(item.price * item.quantity).toLocaleString()} RWF</p>
+                        <p className="font-black text-gray-700 dark:text-gray-300">{format(item.price * item.quantity)}</p>
                       </div>
                     ))}
+                  </div>
+                </div>
+
+                {/* Fulfillment details */}
+                <div className={`rounded-2xl p-5 mb-6 border ${order.fulfillmentType === 'pickup' ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/30' : 'bg-orange-50 dark:bg-orange-900/10 border-orange-100 dark:border-orange-900/30'}`}>
+                  <div className="flex items-center gap-2 mb-3">
+                    {order.fulfillmentType === 'pickup'
+                      ? <ShoppingBag size={14} className="text-blue-500" />
+                      : <Truck size={14} className="text-orange-500" />}
+                    <span className={`text-[10px] font-black uppercase tracking-widest ${order.fulfillmentType === 'pickup' ? 'text-blue-600 dark:text-blue-400' : 'text-orange-600 dark:text-orange-400'}`}>
+                      {order.fulfillmentType === 'pickup' ? 'Pickup' : 'Delivery'}
+                    </span>
+                  </div>
+                  <div className="space-y-2 text-sm font-medium text-gray-600 dark:text-gray-400">
+                    {order.phone && (
+                      <div className="flex items-center gap-2">
+                        <Phone size={13} className="flex-shrink-0 text-gray-400" />
+                        <span>{order.phone}</span>
+                      </div>
+                    )}
+                    {order.fulfillmentType === 'delivery' && order.deliveryNotes && (
+                      <div className="flex items-start gap-2">
+                        <MapPin size={13} className="flex-shrink-0 text-gray-400 mt-0.5" />
+                        <span>{order.deliveryNotes}</span>
+                      </div>
+                    )}
+                    {order.fulfillmentType === 'delivery' && order.locationLink && (
+                      <div className="flex items-center gap-2">
+                        <ExternalLink size={13} className="flex-shrink-0 text-gray-400" />
+                        <a href={order.locationLink} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline truncate">
+                          View location on map
+                        </a>
+                      </div>
+                    )}
+                    {order.fulfillmentType === 'pickup' && order.pickupName && (
+                      <div className="flex items-center gap-2">
+                        <UserIcon size={13} className="flex-shrink-0 text-gray-400" />
+                        <span>Pickup name: {order.pickupName}</span>
+                      </div>
+                    )}
+                    {order.fulfillmentType === 'pickup' && order.pickupTime && (
+                      <div className="flex items-center gap-2">
+                        <Clock size={13} className="flex-shrink-0 text-gray-400" />
+                        <span>Pickup time: {order.pickupTime}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 

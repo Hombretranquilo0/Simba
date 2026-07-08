@@ -20,7 +20,7 @@ export class AuthService {
   }
 
   async login(user: any) {
-    const payload = { email: user.email, sub: user.id, role: user.role };
+    const payload = { email: user.email, sub: user.id, role: user.role, managedBranchId: user.managedBranchId };
     return {
       access_token: this.jwtService.sign(payload),
       user: {
@@ -28,6 +28,7 @@ export class AuthService {
         email: user.email,
         name: user.name,
         role: user.role,
+        managedBranchId: user.managedBranchId,
       }
     };
   }
@@ -59,7 +60,7 @@ export class AuthService {
     return user;
   }
 
-  async signUp(email: string, pass: string, name: string) {
+  async signUp(email: string, pass: string, name: string, role?: string, managedBranchId?: string) {
     const existingUser = await this.usersService.findOne(email);
     if (existingUser) {
       throw new ConflictException('User already exists');
@@ -70,6 +71,8 @@ export class AuthService {
       email,
       password: hashedPassword,
       name,
+      role: role ?? 'user',
+      managedBranchId: managedBranchId ?? undefined,
     });
 
     const { password, ...result } = user;

@@ -27,6 +27,7 @@ Frontend/next-env.d.ts
 # Local database
 Backend/prisma/dev.db
 Backend/prisma/dev.db-journal
+Backend/prisma/prisma/
 
 # Logs
 *.log
@@ -55,3 +56,7 @@ Backend/.env.backup
 .agents/
 .claude/
 skills-lock.json
+
+# Local data dumps
+cc.json
+simba_products.json

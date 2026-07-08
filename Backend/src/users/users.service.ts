@@ -30,4 +30,16 @@ export class UsersService {
       data,
     });
   }
+
+  async findById(id: number): Promise<User | null> {
+    return this.prisma.user.findUnique({
+      where: { id },
+    });
+  }
+
+  async delete(id: number): Promise<void> {
+    await this.prisma.user.delete({
+      where: { id },
+    });
+  }
 }

@@ -57,7 +57,13 @@ export async function generateStaticParams() {
 }
 
 import { AuthProvider } from "@/context/AuthContext";
+import { BranchProvider } from "@/context/BranchContext";
+import { CurrencyProvider } from "@/context/CurrencyContext";
+import { CartPopupProvider } from "@/context/CartPopupContext";
 import Footer from "@/components/Footer";
+import ChatWidget from "@/components/ChatWidget";
+import GlobalBranchPicker from "@/components/GlobalBranchPicker";
+import CartPopupModal from "@/components/CartPopupModal";
 
 export default async function RootLayout({
   children,
@@ -98,19 +104,28 @@ export default async function RootLayout({
       </head>
       <body className={`${inter.className} bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen transition-colors duration-300`}>
         <AuthProvider>
-          <ThemeProvider>
-            <TranslationProvider dictionary={dictionary}>
-              <CartProvider>
-                <SearchProvider>
-                  <Navbar locale={locale as Locale} />
-                  <main>
-                    {children}
-                  </main>
-                  <Footer />
-                </SearchProvider>
-              </CartProvider>
-            </TranslationProvider>
-          </ThemeProvider>
+          <BranchProvider>
+            <CurrencyProvider>
+            <ThemeProvider>
+              <TranslationProvider dictionary={dictionary}>
+                <CartProvider>
+                  <CartPopupProvider>
+                    <SearchProvider>
+                      <Navbar locale={locale as Locale} />
+                      <main>
+                        {children}
+                      </main>
+                      <Footer />
+                      <ChatWidget />
+                      <GlobalBranchPicker />
+                      <CartPopupModal />
+                    </SearchProvider>
+                  </CartPopupProvider>
+                </CartProvider>
+              </TranslationProvider>
+            </ThemeProvider>
+            </CurrencyProvider>
+          </BranchProvider>
         </AuthProvider>
       </body>
     </html>

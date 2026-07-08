@@ -19,20 +19,20 @@ function AuthCallbackContent() {
       try {
         const user = JSON.parse(decodeURIComponent(userStr));
         login(token, user);
+        // GlobalBranchPicker auto-opens on home if no branch stored
         router.push(`/${locale}`);
-      } catch (error) {
-        console.error('Failed to parse user data', error);
+      } catch {
         router.push(`/${locale}/login?error=auth_failed`);
       }
     } else {
       router.push(`/${locale}/login?error=missing_data`);
     }
-  }, [searchParams, login, router, locale]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      <p className="ml-4 text-lg">Completing sign in...</p>
+    <div className="min-h-screen flex items-center justify-center gap-4">
+      <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-simba-orange" />
+      <p className="text-lg font-medium text-gray-600 dark:text-gray-300">Completing sign in…</p>
     </div>
   );
 }
@@ -41,8 +41,7 @@ export default function AuthCallback() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-        <p className="ml-4 text-lg">Loading...</p>
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-simba-orange" />
       </div>
     }>
       <AuthCallbackContent />

@@ -1,14 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCart, Search, Menu, X, User as UserIcon, LogOut, LayoutDashboard, ShoppingBag as OrdersIcon, ChevronDown } from 'lucide-react';
+import { ShoppingCart, Search, Menu, X, User as UserIcon, LogOut, LayoutDashboard, ShoppingBag, ChevronDown, MapPin } from 'lucide-react';
 import { useSearch } from '@/context/SearchContext';
 import API_URL from '@/utils/api';
 import { useCart } from '@/context/CartContext';
 import { useTranslation } from '@/context/TranslationContext';
 import { useAuth } from '@/context/AuthContext';
+import { useBranch } from '@/context/BranchContext';
 import LanguageSwitcher from './LanguageSwitcher';
 import ThemeToggle from './ThemeToggle';
+import CurrencySelector from './CurrencySelector';
 import { Locale } from '@/utils/i18n';
 import { translateCategory } from '@/utils/i18n';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -19,8 +21,8 @@ const Navbar = ({ locale }: { locale: Locale }) => {
   const { totalItems } = useCart();
   const { t, dictionary } = useTranslation();
   const { user, logout, isAuthenticated } = useAuth();
+  const { selectedBranch, openPicker } = useBranch();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isCatOpen, setIsCatOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobileCatOpen, setIsMobileCatOpen] = useState(false);
@@ -62,7 +64,7 @@ const Navbar = ({ locale }: { locale: Locale }) => {
   }, []);
 
   return (
-    <nav className="sticky top-0 z-50 glass dark:bg-gray-950/80 border-b border-gray-200 dark:border-gray-800 px-4 py-3 shadow-sm transition-all duration-300">
+    <nav className="sticky top-0 z-50 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-4 py-3 shadow-sm transition-colors duration-300">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
         {/* Logo */}
         <Link href={`/${locale}`} className="flex-shrink-0 group">
@@ -137,7 +139,18 @@ const Navbar = ({ locale }: { locale: Locale }) => {
             <Link href={`/${locale}/about`} className="px-3 py-2 text-sm font-bold text-gray-600 dark:text-gray-300 hover:text-simba-orange dark:hover:text-simba-gold transition-colors">
               About
             </Link>
+            {isAuthenticated && (
+              <button
+                onClick={openPicker}
+                className="flex items-center gap-1.5 px-3 py-2 text-sm font-bold rounded-xl border-2 border-simba-orange/20 bg-orange-50 dark:bg-orange-900/20 text-simba-orange hover:bg-orange-100 dark:hover:bg-orange-900/40 transition-all max-w-[160px]"
+                title="Switch branch"
+              >
+                <MapPin size={13} className="flex-shrink-0" />
+                <span className="truncate">{selectedBranch ? selectedBranch.shortName : 'Pick branch'}</span>
+              </button>
+            )}
             <LanguageSwitcher currentLocale={locale} />
+            <CurrencySelector />
             <ThemeToggle />
           </div>
           
@@ -171,61 +184,22 @@ const Navbar = ({ locale }: { locale: Locale }) => {
           {/* User Auth Section */}
           <div className="relative">
             {isAuthenticated ? (
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="flex items-center gap-2 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 transition-colors"
-                >
-                  <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-simba-gold/10 flex items-center justify-center text-simba-orange dark:text-simba-gold font-bold">
-                    {user?.name?.[0]?.toUpperCase() || 'U'}
-                  </div>
-                  <span className="hidden lg:block text-sm font-medium">{user?.name}</span>
-                </button>
-                
-                <AnimatePresence>
-                  {isUserMenuOpen && (
-                    <motion.div 
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
-                      className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 py-2 z-50"
-                    >
-                      <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-800">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Signed in as</p>
-                        <p className="text-sm font-bold truncate">{user?.email}</p>
-                      </div>
-
-                      <Link 
-                        href={`/${locale}/orders`}
-                        onClick={() => setIsUserMenuOpen(false)}
-                        className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-2 transition-colors border-b border-gray-50 dark:border-gray-800"
-                      >
-                        <OrdersIcon size={16} />
-                        My Orders
-                      </Link>
-                      
-                      {user?.role === 'manager' && (
-                        <Link 
-                          href={`/${locale}/manager`}
-                          onClick={() => setIsUserMenuOpen(false)}
-                          className="w-full text-left px-4 py-2 text-sm text-simba-orange hover:bg-orange-50 dark:hover:bg-simba-gold/10 flex items-center gap-2 transition-colors border-b border-gray-50 dark:border-gray-800"
-                        >
-                          <LayoutDashboard size={16} />
-                          Manager Dashboard
-                        </Link>
-                      )}
-
-                      <button 
-                        onClick={() => { logout(); setIsUserMenuOpen(false); }}
-                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 transition-colors"
-                      >
-                        <LogOut size={16} />
-                        Logout
-                      </button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+              <Link
+                href={
+                  user?.role === 'super_admin'
+                    ? `/${locale}/super-admin`
+                    : user?.role === 'manager'
+                    ? `/${locale}/manager`
+                    : `/${locale}/profile`
+                }
+                className="flex items-center gap-2 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 transition-colors"
+                title={user?.role === 'super_admin' ? 'Super Admin Dashboard' : user?.role === 'manager' ? 'Manager Dashboard' : 'My Account'}
+              >
+                <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-simba-gold/10 flex items-center justify-center text-simba-orange dark:text-simba-gold font-bold">
+                  {user?.name?.[0]?.toUpperCase() || 'U'}
+                </div>
+                <span className="hidden lg:block text-sm font-medium">{user?.name}</span>
+              </Link>
             ) : (
               <div className="hidden md:flex items-center gap-2">
                 <Link 
@@ -375,11 +349,19 @@ const Navbar = ({ locale }: { locale: Locale }) => {
                 {isAuthenticated ? (
                   <>
                     <Link
+                      href={`/${locale}/profile`}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold text-gray-700 dark:text-gray-300 hover:text-simba-orange hover:bg-orange-50 dark:hover:bg-simba-gold/10 transition-colors"
+                    >
+                      <UserIcon size={16} />
+                      My Profile
+                    </Link>
+                    <Link
                       href={`/${locale}/orders`}
                       onClick={() => setIsMobileMenuOpen(false)}
                       className="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold text-gray-700 dark:text-gray-300 hover:text-simba-orange hover:bg-orange-50 dark:hover:bg-simba-gold/10 transition-colors"
                     >
-                      <OrdersIcon size={16} />
+                      <ShoppingBag size={16} />
                       My Orders
                     </Link>
                     {user?.role === 'manager' && (
@@ -390,6 +372,16 @@ const Navbar = ({ locale }: { locale: Locale }) => {
                       >
                         <LayoutDashboard size={16} />
                         Manager Dashboard
+                      </Link>
+                    )}
+                    {user?.role === 'super_admin' && (
+                      <Link
+                        href={`/${locale}/super-admin`}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold text-simba-orange hover:bg-orange-50 dark:hover:bg-simba-gold/10 transition-colors"
+                      >
+                        <LayoutDashboard size={16} />
+                        Super Admin Dashboard
                       </Link>
                     )}
                   </>
@@ -454,9 +446,25 @@ const Navbar = ({ locale }: { locale: Locale }) => {
                   <LanguageSwitcher currentLocale={locale} />
                 </div>
                 <div className="flex items-center justify-between">
+                  <span className="text-xs font-black uppercase tracking-widest text-gray-400">Currency</span>
+                  <CurrencySelector />
+                </div>
+                <div className="flex items-center justify-between">
                   <span className="text-xs font-black uppercase tracking-widest text-gray-400">Theme</span>
                   <ThemeToggle />
                 </div>
+                {isAuthenticated && (
+                  <button
+                    onClick={() => { openPicker(); setIsMobileMenuOpen(false); }}
+                    className="w-full flex items-center justify-between gap-2 px-4 py-3 rounded-2xl text-sm font-bold text-simba-orange bg-orange-50 dark:bg-orange-900/20 hover:bg-orange-100 dark:hover:bg-orange-900/40 transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      <MapPin size={16} />
+                      {selectedBranch ? selectedBranch.shortName : 'Pick branch'}
+                    </span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-simba-orange/60">Switch</span>
+                  </button>
+                )}
                 {isAuthenticated && (
                   <button
                     onClick={() => { logout(); setIsMobileMenuOpen(false); }}

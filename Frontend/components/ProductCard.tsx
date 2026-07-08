@@ -12,6 +12,8 @@ import { useSearch } from '@/context/SearchContext';
 import { translateCategory } from '@/utils/i18n';
 import { useState } from 'react';
 import QuickViewModal from '@/components/QuickViewModal';
+import { useCurrency } from '@/context/CurrencyContext';
+import { useCartPopup } from '@/context/CartPopupContext';
 
 interface ProductCardProps {
   product: Product;
@@ -27,6 +29,8 @@ const ProductCard = ({ product, locale: propLocale }: ProductCardProps) => {
   const [quickViewOpen, setQuickViewOpen] = useState(false);
 
   const translatedCategory = translateCategory(product.category, dictionary);
+  const { format } = useCurrency();
+  const { openPopup } = useCartPopup();
 
   // Fallback image if product image is missing or invalid
   const imageUrl = product.image || 'https://via.placeholder.com/300x300?text=No+Image';
@@ -145,15 +149,15 @@ const ProductCard = ({ product, locale: propLocale }: ProductCardProps) => {
               {discountedPrice ? (
                 <>
                   <span className="text-xl font-black text-orange-500">
-                    {discountedPrice.toLocaleString()} <span className="text-[10px] font-bold text-orange-400 uppercase">RWF</span>
+                    {format(discountedPrice)}
                   </span>
                   <span className="text-sm line-through text-gray-400">
-                    {product.price.toLocaleString()} RWF
+                    {format(product.price)}
                   </span>
                 </>
               ) : (
                 <span className="text-xl font-black text-gray-900 dark:text-white">
-                  {product.price.toLocaleString()} <span className="text-[10px] font-bold text-gray-400 uppercase">RWF</span>
+                  {format(product.price)}
                 </span>
               )}
               {product.unit && (
@@ -171,6 +175,7 @@ const ProductCard = ({ product, locale: propLocale }: ProductCardProps) => {
               onClick={(e) => {
                 e.preventDefault();
                 addToCart(product);
+                openPopup(product);
               }}
             >
               <ShoppingCart size={20} />

@@ -10,9 +10,12 @@ import { useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { useAuth } from '@/context/AuthContext';
+import { useBranch } from '@/context/BranchContext';
 import { useRouter } from 'next/navigation';
 import API_URL from '@/utils/api';
 import { jsPDF } from 'jspdf';
+import { useSavedItems } from '@/hooks/useSavedItems';
+import { useCurrency } from '@/context/CurrencyContext';
 
 const MIN_ORDER = 2500;
 const RW_PHONE = /^\+2507[2389]\d{7}$/;
@@ -20,13 +23,32 @@ const RW_PHONE = /^\+2507[2389]\d{7}$/;
 export default function CartPage() {
   const { items, totalPrice, removeFromCart, increaseQuantity, decreaseQuantity, clearCart, addToCart } = useCart();
   const { isAuthenticated, token, logout } = useAuth();
+  const { selectedBranch } = useBranch();
   const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
-  const [savedItems, setSavedItems] = useState<import('@/types/product').CartItem[]>([]);
+
+  // ── Save for Later (DB-backed when authenticated) ──────────────
+  const {
+    savedItems,
+    saveForLater: _saveForLater,
+    removeFromSaved,
+    moveToCart: _moveToCart,
+  } = useSavedItems();
+
+  const saveForLater = (item: import('@/types/product').CartItem) => {
+    removeFromCart(item.id);
+    _saveForLater(item);
+  };
+
+  const moveToCart = (item: import('@/types/product').CartItem) => {
+    _moveToCart(item).then((i) => addToCart(i as any));
+  };
+
+  const removeSaved = (id: number) => removeFromSaved(id);
 
   // ── 3-step checkout state ──────────────────────────────────────
   // step 1 = fulfillment choice, step 2 = details form, step 3 = pay
@@ -61,27 +83,21 @@ export default function CartPage() {
     date: string;
   } | null>(null);
 
-  const saveForLater = (item: import('@/types/product').CartItem) => {
-    removeFromCart(item.id);
-    setSavedItems(prev => prev.some(s => s.id === item.id) ? prev : [...prev, { ...item, quantity: 1 }]);
-  };
-
-  const moveToCart = (item: import('@/types/product').CartItem) => {
-    setSavedItems(prev => prev.filter(s => s.id !== item.id));
-    addToCart(item as any);
-  };
-
-  const removeSaved = (id: number) => setSavedItems(prev => prev.filter(s => s.id !== id));
-
   const { t } = useTranslation();
   const params = useParams();
   const locale = params.locale as string;
+  const { format } = useCurrency();
 
   useEffect(() => { setIsMounted(true); }, []);
 
   const handleCheckout = () => {
     if (!isAuthenticated) {
       router.push(`/${locale}/login?redirect=cart`);
+      return;
+    }
+    if (!selectedBranch) {
+      // Fire the global branch picker instead of proceeding
+      window.dispatchEvent(new CustomEvent('open-branch-picker'));
       return;
     }
     setCheckoutStep(1);
@@ -169,6 +185,7 @@ export default function CartPage() {
             price: item.price,
           })),
           total: totalPrice,
+          branchId: selectedBranch?.id ?? null,
           fulfillmentType,
           phone,
           deliveryNotes: fulfillmentType === 'delivery' ? deliveryNotes : undefined,
@@ -386,26 +403,87 @@ export default function CartPage() {
 
   if (items.length === 0 && !orderComplete) {
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="max-w-7xl mx-auto px-4 py-32 text-center"
-      >
-        <div className="bg-gray-50 dark:bg-gray-900 w-32 h-32 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner">
-          <ShoppingBag className="text-gray-300 dark:text-gray-700" size={64} />
-        </div>
-        <h2 className="text-4xl font-black text-gray-900 dark:text-white mb-4 tracking-tight">{t('common.emptyCart')}</h2>
-        <p className="text-gray-500 dark:text-gray-400 mb-10 max-w-md mx-auto text-lg font-medium">
-          {t('common.emptyCartDesc')}
-        </p>
-        <Link
-          href={`/${locale}`}
-          className="inline-flex items-center gap-3 bg-simba-orange hover:bg-simba-orange text-white font-black py-4 px-10 rounded-2xl transition-all shadow-xl shadow-simba-orange/20 hover:shadow-simba-orange/40 hover:-translate-y-1 active:translate-y-0"
+      <div className="max-w-7xl mx-auto px-4 py-16">
+        {/* Empty cart hero */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center py-20"
         >
-          <ArrowLeft size={20} />
-          {t('common.startShopping')}
-        </Link>
-      </motion.div>
+          <div className="bg-gray-50 dark:bg-gray-900 w-32 h-32 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner">
+            <ShoppingBag className="text-gray-300 dark:text-gray-700" size={64} />
+          </div>
+          <h2 className="text-4xl font-black text-gray-900 dark:text-white mb-4 tracking-tight">{t('common.emptyCart')}</h2>
+          <p className="text-gray-500 dark:text-gray-400 mb-10 max-w-md mx-auto text-lg font-medium">
+            {t('common.emptyCartDesc')}
+          </p>
+          <Link
+            href={`/${locale}`}
+            className="inline-flex items-center gap-3 bg-simba-orange hover:bg-simba-orange text-white font-black py-4 px-10 rounded-2xl transition-all shadow-xl shadow-simba-orange/20 hover:shadow-simba-orange/40 hover:-translate-y-1 active:translate-y-0"
+          >
+            <ArrowLeft size={20} />
+            {t('common.startShopping')}
+          </Link>
+        </motion.div>
+
+        {/* Saved for Later — always visible even when cart is empty */}
+        <AnimatePresence>
+          {savedItems.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 16 }}
+              className="max-w-2xl mx-auto"
+            >
+              <div className="border-t border-gray-100 dark:border-gray-800 pt-12 mb-6 flex items-center gap-3">
+                <h3 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">
+                  Saved for Later
+                </h3>
+                <span className="text-sm font-bold text-gray-400">({savedItems.length})</span>
+              </div>
+              <div className="space-y-4">
+                {savedItems.map(item => (
+                  <motion.div
+                    key={item.id}
+                    layout
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 10 }}
+                    className="bg-white dark:bg-gray-900 border border-dashed border-gray-200 dark:border-gray-700 rounded-3xl p-4 flex items-center gap-4 shadow-sm"
+                  >
+                    <div className="relative w-16 h-16 flex-shrink-0 bg-gray-50 dark:bg-gray-800 rounded-xl overflow-hidden">
+                      <Image
+                        src={item.image || 'https://via.placeholder.com/64'}
+                        alt={item.name}
+                        fill
+                        className="object-contain p-2"
+                      />
+                    </div>
+                    <div className="flex-grow min-w-0">
+                      <p className="font-black text-gray-900 dark:text-white text-sm truncate">{item.name}</p>
+                      <p className="text-simba-orange font-bold text-sm">{format(item.price)}</p>
+                    </div>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <button
+                        onClick={() => moveToCart(item)}
+                        className="text-[10px] font-black uppercase tracking-widest text-simba-orange border border-simba-orange px-3 py-1.5 rounded-xl hover:bg-simba-orange hover:text-white transition-all"
+                      >
+                        Move to Cart
+                      </button>
+                      <button
+                        onClick={() => removeSaved(item.id)}
+                        className="text-gray-300 hover:text-red-500 transition-colors"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     );
   }
 
@@ -632,7 +710,7 @@ export default function CartPage() {
                         <div className="h-px bg-gray-200 dark:bg-gray-700 my-1" />
                         <div className="flex justify-between items-center">
                           <span className="font-black text-gray-700 dark:text-gray-300">{t('common.total')}</span>
-                          <span className="text-lg font-black text-orange-500">{totalPrice.toLocaleString()} RWF</span>
+                          <span className="text-lg font-black text-orange-500">{Math.round(totalPrice).toLocaleString()} RWF</span>
                         </div>
                       </div>
 
@@ -656,7 +734,7 @@ export default function CartPage() {
                         ) : (
                           <>
                             <CreditCard size={20} />
-                            Pay {totalPrice.toLocaleString()} RWF
+                            Pay {Math.round(totalPrice).toLocaleString()} RWF
                           </>
                         )}
                       </motion.button>
@@ -787,10 +865,10 @@ export default function CartPage() {
 
                     <div className="text-right">
                       <p className="text-xs font-bold text-gray-400 dark:text-gray-500 mb-1">
-                        {item.quantity > 1 ? `${item.price.toLocaleString()} RWF each` : ''}
+                        {item.quantity > 1 ? `${format(item.price)} each` : ''}
                       </p>
                       <p className="text-2xl font-black text-simba-orange dark:text-simba-gold tracking-tighter">
-                        {(item.price * item.quantity).toLocaleString()} <span className="text-sm">RWF</span>
+                        {format(item.price * item.quantity)}
                       </p>
                     </div>
                   </div>
@@ -827,7 +905,7 @@ export default function CartPage() {
                       </div>
                       <div className="flex-grow min-w-0">
                         <p className="font-black text-gray-900 dark:text-white text-sm truncate">{item.name}</p>
-                        <p className="text-simba-orange font-bold text-sm">{item.price.toLocaleString()} RWF</p>
+                        <p className="text-simba-orange font-bold text-sm">{format(item.price)}</p>
                       </div>
                       <div className="flex items-center gap-3 flex-shrink-0">
                         <button
@@ -860,7 +938,7 @@ export default function CartPage() {
             <div className="space-y-5 mb-6">
               <div className="flex justify-between text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest text-xs">
                 <span>{t('common.subtotal')}</span>
-                <span className="text-gray-900 dark:text-gray-100 text-sm font-black">{totalPrice.toLocaleString()} RWF</span>
+                <span className="text-gray-900 dark:text-gray-100 text-sm font-black">{format(totalPrice)}</span>
               </div>
               <div className="flex justify-between text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest text-xs">
                 <span>{t('common.deliveryFee')}</span>
@@ -871,7 +949,7 @@ export default function CartPage() {
                 <span className="text-gray-900 dark:text-white font-black uppercase tracking-tighter text-lg">{t('common.total')}</span>
                 <div className="text-right">
                   <p className="text-3xl font-black text-simba-orange dark:text-simba-gold tracking-tighter">
-                    {totalPrice.toLocaleString()} <span className="text-sm">RWF</span>
+                    {format(totalPrice)}
                   </p>
                 </div>
               </div>
@@ -887,9 +965,9 @@ export default function CartPage() {
                   className="mb-5 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl"
                 >
                   <p className="text-amber-700 dark:text-amber-400 text-xs font-black leading-relaxed">
-                    ⚠️ Minimum order is {MIN_ORDER.toLocaleString()} RWF. Add{' '}
+                    ⚠️ Minimum order is {format(MIN_ORDER)}. Add{' '}
                     <span className="text-amber-900 dark:text-amber-300">
-                      {(MIN_ORDER - totalPrice).toLocaleString()} RWF
+                      {format(MIN_ORDER - totalPrice)}
                     </span>{' '}
                     more to proceed.
                   </p>
@@ -897,12 +975,34 @@ export default function CartPage() {
               )}
             </AnimatePresence>
 
+            {/* No branch selected warning */}
+            <AnimatePresence>
+              {!selectedBranch && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mb-5 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl"
+                >
+                  <p className="text-blue-700 dark:text-blue-400 text-xs font-black leading-relaxed mb-2">
+                    📍 You must select a branch before checking out.
+                  </p>
+                  <button
+                    onClick={() => window.dispatchEvent(new CustomEvent('open-branch-picker'))}
+                    className="text-[10px] font-black uppercase tracking-widest text-white bg-blue-500 hover:bg-blue-600 px-3 py-1.5 rounded-lg transition-colors"
+                  >
+                    Pick a Branch
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <motion.button
-              whileHover={belowMinimum ? {} : { scale: 1.02 }}
-              whileTap={belowMinimum ? {} : { scale: 0.98 }}
-              onClick={belowMinimum ? undefined : handleCheckout}
+              whileHover={belowMinimum || !selectedBranch ? {} : { scale: 1.02 }}
+              whileTap={belowMinimum || !selectedBranch ? {} : { scale: 0.98 }}
+              onClick={belowMinimum || !selectedBranch ? undefined : handleCheckout}
               className={`w-full font-black py-5 rounded-2xl shadow-xl transition-all flex items-center justify-center gap-3 text-lg ${
-                belowMinimum
+                belowMinimum || !selectedBranch
                   ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed shadow-none'
                   : 'bg-orange-500 hover:bg-orange-600 text-white shadow-orange-500/20'
               }`}

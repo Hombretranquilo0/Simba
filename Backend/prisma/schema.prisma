@@ -3,39 +3,64 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Product {
-  id            Int         @id @default(autoincrement())
-  name          String
-  price         Float
-  category      String
-  subcategoryId Int?
-  inStock       Boolean     @default(true)
-  image         String?
-  unit          String?
-  description   String?
-  translations  Json?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  stockQuantity Int         @default(0)
-  discount      Float?
-  orderItems    OrderItem[]
+  id              Int               @id @default(autoincrement())
+  name            String
+  price           Float
+  category        String
+  subcategoryId   Int?
+  inStock         Boolean           @default(true)
+  image           String?
+  unit            String?
+  description     String?
+  translations    Json?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  stockQuantity   Int               @default(0)
+  discount        Float?
+  orderItems      OrderItem[]
+  savedItems      SavedItem[]
+  branchInventory BranchInventory[]
+}
+
+model BranchInventory {
+  id            Int     @id @default(autoincrement())
+  branchId      String
+  productId     Int
+  stockQuantity Int     @default(0)
+  inStock       Boolean @default(true)
+  product       Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([branchId, productId])
 }
 
 model User {
+  id              Int         @id @default(autoincrement())
+  email           String      @unique
+  password        String?
+  name            String?
+  role            String      @default("user")
+  managedBranchId String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  googleId        String?     @unique
+  orders          Order[]
+  savedItems      SavedItem[]
+}
+
+model SavedItem {
   id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String?
-  name      String?
-  role      String   @default("user")
+  userId    Int
+  productId Int
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  googleId  String?  @unique
-  orders    Order[]
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
 }
 
 model Order {
@@ -43,6 +68,7 @@ model Order {
   userId          Int
   total           Float
   status          String      @default("pending")
+  branchId        String?
   // Fulfillment
   fulfillmentType String      @default("delivery") // "delivery" | "pickup"
   phone           String?
@@ -66,4 +92,11 @@ model OrderItem {
   price     Float
   order     Order   @relation(fields: [orderId], references: [id])
   product   Product @relation(fields: [productId], references: [id])
+}
+
+model Setting {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
 }

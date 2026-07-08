@@ -1,109 +1,51 @@
 import { PrismaClient } from '@prisma/client';
-import * as fs from 'fs';
-import * as path from 'path';
-import * as bcrypt from 'bcrypt';
 
-const prisma = new PrismaClient({
-  datasources: { db: { url: process.env.DIRECT_URL } },
-});
+const prisma = new PrismaClient();
+
+const BRANCH_IDS = [
+  'utc',
+  'kimironko',
+  'kigali-heights',
+  'gishushu',
+  'kicukiro',
+  'rebero',
+  'kisementi',
+  'gikondo',
+  'nyamirambo',
+];
 
 async function main() {
-  // Use absolute path or carefully constructed relative path
-  const dataPath = path.resolve(__dirname, '../../Frontend/data/products.json');
-  
-  if (!fs.existsSync(dataPath)) {
-    console.error(`Data file not found at: ${dataPath}`);
-    return;
-  }
+  console.log('Seeding BranchInventory…');
 
-  const rawData = fs.readFileSync(dataPath, 'utf8');
-  const data = JSON.parse(rawData);
-
-  console.log(`Seeding ${data.products.length} products...`);
-
-  for (const product of data.products) {
-    await prisma.product.upsert({
-      where: { id: product.id },
-      update: {
-        name: product.name,
-        price: product.price,
-        category: product.category,
-        subcategoryId: product.subcategoryId,
-        inStock: product.inStock !== undefined ? product.inStock : true,
-        stockQuantity: Math.floor(Math.random() * 100),
-        image: product.image,
-        unit: product.unit,
-        description: product.description || null,
-        translations: product.translations || null,
-      },
-      create: {
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        category: product.category,
-        subcategoryId: product.subcategoryId,
-        inStock: product.inStock !== undefined ? product.inStock : true,
-        stockQuantity: Math.floor(Math.random() * 100),
-        image: product.image,
-        unit: product.unit,
-        description: product.description || null,
-        translations: product.translations || null,
-      },
-    });
-  }
-
-  // Create Manager User
-  const managerPassword = await bcrypt.hash('manager123', 10);
-  const manager = await prisma.user.upsert({
-    where: { email: 'manager@simba.rw' },
-    update: {},
-    create: {
-      email: 'manager@simba.rw',
-      password: managerPassword,
-      name: 'Simba Manager',
-      role: 'manager',
-    },
+  const products = await prisma.product.findMany({
+    select: { id: true, stockQuantity: true, inStock: true },
   });
 
-  // Create a sample user
-  const userPassword = await bcrypt.hash('user123', 10);
-  const user = await prisma.user.upsert({
-    where: { email: 'customer@test.com' },
-    update: {},
-    create: {
-      email: 'customer@test.com',
-      password: userPassword,
-      name: 'John Doe',
-      role: 'user',
-    },
-  });
+  console.log(`Found ${products.length} products, seeding for ${BRANCH_IDS.length} branches…`);
 
-  // Create sample orders
-  console.log('Creating sample orders...');
-  const products = await prisma.product.findMany({ take: 5 });
-  
-  for (let i = 0; i < 3; i++) {
-    const orderProducts = products.slice(0, 2 + i);
-    const total = orderProducts.reduce((sum, p) => sum + p.price, 0);
-    
-    await prisma.order.create({
-      data: {
-        userId: user.id,
-        total,
-        status: i === 0 ? 'completed' : 'pending',
-        items: {
-          create: orderProducts.map(p => ({
-            productId: p.id,
-            quantity: 1,
-            price: p.price,
-          })),
+  let created = 0;
+  let skipped = 0;
+
+  for (const branch of BRANCH_IDS) {
+    for (const product of products) {
+      // Each branch gets independent stock — seed from global value
+      // so the store starts with realistic numbers
+      const result = await prisma.branchInventory.upsert({
+        where: { branchId_productId: { branchId: branch, productId: product.id } },
+        create: {
+          branchId: branch,
+          productId: product.id,
+          stockQuantity: product.stockQuantity,
+          inStock: product.inStock,
         },
-        createdAt: new Date(Date.now() - i * 24 * 60 * 60 * 1000), // Recent days
-      },
-    });
+        update: {}, // don't overwrite existing rows
+      });
+      if (result) created++;
+    }
+    console.log(`  ✓ Branch "${branch}" done`);
   }
 
-  console.log('Seeding complete.');
+  console.log(`\nDone. ${created} BranchInventory rows upserted.`);
 }
 
 main()
@@ -111,6 +53,4 @@ main()
     console.error(e);
     process.exit(1);
   })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+  .finally(() => prisma.$disconnect());

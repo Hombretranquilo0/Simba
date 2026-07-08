@@ -14,6 +14,7 @@ import { Loader2, Tag } from 'lucide-react';
 import Link from 'next/link';
 
 import API_URL from '@/utils/api';
+import { useBranch } from '@/context/BranchContext';
 
 interface ProductListProps {
   initialProducts: Product[];
@@ -35,6 +36,7 @@ const ProductList = ({ initialProducts, discountedProducts = [] }: ProductListPr
   const { t, dictionary } = useTranslation();
   const params = useParams();
   const locale = params.locale as string;
+  const { selectedBranch } = useBranch();
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [sortBy, setSortBy] = useState<'price-asc' | 'price-desc' | 'name-asc'>('name-asc');
   const [aiResults, setAiResults] = useState<Product[] | null>(null);
@@ -56,7 +58,7 @@ const ProductList = ({ initialProducts, discountedProducts = [] }: ProductListPr
     fetch(`${API_URL}/ai/search`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query: debouncedSearchTerm }),
+      body: JSON.stringify({ query: debouncedSearchTerm, branchId: selectedBranch?.id }),
       signal: controller.signal,
     })
       .then((res) => {
@@ -363,20 +365,36 @@ const ProductList = ({ initialProducts, discountedProducts = [] }: ProductListPr
                         </p>
                       </div>
                     </div>
-                    <Link href={`/${locale}/category/${encodeURIComponent(category)}`} className="text-simba-orange dark:text-simba-gold font-bold text-sm hover:underline flex items-center gap-1">
+                    <Link
+                      href={`/${locale}/category/${encodeURIComponent(category)}`}
+                      className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white font-black text-sm px-5 py-2.5 rounded-2xl shadow-md shadow-orange-500/25 hover:shadow-orange-500/40 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-150"
+                    >
                       View All
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
                       </svg>
                     </Link>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-8">
                     <AnimatePresence mode="popLayout">
-                      {groupedProducts[category].slice(0, 15).map((product) => (
+                      {groupedProducts[category].slice(0, 8).map((product) => (
                         <ProductCard key={product.id} product={product} locale={locale} />
                       ))}
                     </AnimatePresence>
                   </div>
+                  {groupedProducts[category].length > 8 && (
+                    <div className="mt-8 text-center">
+                      <Link
+                        href={`/${locale}/category/${encodeURIComponent(category)}`}
+                        className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white font-black text-sm px-8 py-3.5 rounded-2xl shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-150"
+                      >
+                        View all {groupedProducts[category].length} products
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
+                        </svg>
+                      </Link>
+                    </div>
+                  )}
                 </motion.section>
               ))
             )}
@@ -428,22 +446,35 @@ const ProductList = ({ initialProducts, discountedProducts = [] }: ProductListPr
                 
                 <Link
                   href={`/${locale}/category/${encodeURIComponent(category)}`}
-                  className="text-simba-orange dark:text-simba-gold font-bold text-sm hover:underline flex items-center gap-1"
+                  className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white font-black text-sm px-5 py-2.5 rounded-2xl shadow-md shadow-orange-500/25 hover:shadow-orange-500/40 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-150"
                 >
                   View All
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
                   </svg>
                 </Link>
               </div>
               
               <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-8">
                 <AnimatePresence mode="popLayout">
-                  {groupedProducts[category].slice(0, 15).map((product) => (
+                  {groupedProducts[category].slice(0, 8).map((product) => (
                     <ProductCard key={product.id} product={product} locale={locale} />
                   ))}
                 </AnimatePresence>
               </div>
+              {groupedProducts[category].length > 8 && (
+                <div className="mt-8 text-center">
+                  <Link
+                    href={`/${locale}/category/${encodeURIComponent(category)}`}
+                    className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white font-black text-sm px-8 py-3.5 rounded-2xl shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-150"
+                  >
+                    View all {groupedProducts[category].length} products
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Link>
+                </div>
+              )}
             </motion.section>
           ))
         )}
