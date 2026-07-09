@@ -62,18 +62,21 @@ export class SuperAdminService {
       'kicukiro', 'rebero', 'kisementi', 'gikondo', 'nyamirambo',
     ];
 
-    const [allOrders, allInventory, managers] = await Promise.all([
-      this.prisma.order.findMany({
-        select: { id: true, total: true, status: true, branchId: true, createdAt: true },
-      }),
-      this.prisma.branchInventory.findMany({
-        select: { branchId: true, stockQuantity: true, inStock: true },
-      }),
-      this.prisma.user.findMany({
-        where: { role: 'manager' },
-        select: { id: true, name: true, email: true, managedBranchId: true },
-      }),
-    ]);
+    // Run sequentially — Supabase pgbouncer in transaction mode does not
+    // reliably handle concurrent Prisma queries (Promise.all), causing
+    // intermittent timeouts on the deployed environment.
+    const allOrders = await this.prisma.order.findMany({
+      select: { id: true, total: true, status: true, branchId: true, createdAt: true },
+    });
+
+    const allInventory = await this.prisma.branchInventory.findMany({
+      select: { branchId: true, stockQuantity: true, inStock: true },
+    });
+
+    const managers = await this.prisma.user.findMany({
+      where: { role: 'manager' },
+      select: { id: true, name: true, email: true, managedBranchId: true },
+    });
 
     const branches = BRANCH_IDS.map((branchId) => {
       const branchOrders = allOrders.filter((o) => o.branchId === branchId);
